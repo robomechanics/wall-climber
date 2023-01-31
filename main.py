@@ -4,6 +4,7 @@ from motors import Motors
 from robot import Robot
 from teleop import Terminal
 from serial import SerialException
+from teleop import Joystick
 import io
 import time
 import curses           # pip install windows-curses
@@ -12,8 +13,10 @@ import os
 
 def main_loop(terminal, buffer):
     interface = Terminal(terminal, buffer)
+    # interface = Joystick(terminal, buffer)
+    print(os.name)
     if os.name == 'nt':
-        port = "COM10"          # Windows
+        port = "COM3"          # Windows
     else:
         port = "/dev/ttyUSB0"   # Linux
     robot = Robot(Motors(port=port, baud=57600))

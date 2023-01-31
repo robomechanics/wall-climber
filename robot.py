@@ -17,8 +17,8 @@ steer_offsets = (-45+180, -25, 0, 0)
 
 class Robot:
     def __init__(self, motors):
-        self.drive = motors.add(drive_ids, 'XM430-W210-T', mirror=(9,))
-        self.steer = motors.add(steer_ids, 'XM430-W210-T', mirror=(8, 7),
+        self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(9, 1))
+        self.steer_motors = motors.add(steer_ids, 'XM430-W210-T', mirror=(8, 7),
                                 offset={steer_ids[i]: steer_offsets[i] for i in range(4)})
         motors.enable(drive_ids, velocity_mode=True)
         motors.enable(steer_ids, velocity_mode=False)
@@ -30,7 +30,10 @@ class Robot:
         :param v: Velocity scaled from -1 (reverse) to 1 (forward)
         """
         for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+            if (id == 1):
+                self.motors.get(id).set_velocity = -1 * v * self.motors.get(id).speed
+            else:
+                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = 0
 
@@ -40,9 +43,15 @@ class Robot:
         :param v: Velocity scaled from -1 (right) to 1 (left)
         """
         for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_velocity = np.abs(v) * self.motors.get(id).speed
+            if (id == 4):
+                self.motors.get(id).set_velocity = -1 * v * self.motors.get(id).speed
+            else:
+                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
         for i, id in enumerate(steer_ids):
-            self.motors.get(id).set_angle = 90 * np.sign(v)
+            if (id == 7):
+                self.motors.get(id).set_angle = -90 # * np.sign(v)
+            else:
+                self.motors.get(id).set_angle = 90 # * np.sign(v)
 
     def turn(self, v):
         """
@@ -51,7 +60,10 @@ class Robot:
         """
         drive_dirs = (-1, 1, -1, 1)
         for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_velocity = drive_dirs[i] * v * self.motors.get(id).speed
+            if (id == 1):
+                self.motors.get(id).set_velocity = -1 * drive_dirs[i] * v * self.motors.get(id).speed
+            else:
+                self.motors.get(id).set_velocity = drive_dirs[i] * v * self.motors.get(id).speed
         steer_dirs = (-1, 1, 1, 1)
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = steer_dirs[i] * 60
