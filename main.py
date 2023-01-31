@@ -12,8 +12,8 @@ import os
 
 
 def main_loop(terminal, buffer):
-    interface = Terminal(terminal, buffer)
-    # interface = Joystick(terminal, buffer)
+    # interface = Terminal(terminal, buffer)
+    interface = Joystick(terminal, buffer)
     print(os.name)
     if os.name == 'nt':
         port = "COM3"          # Windows

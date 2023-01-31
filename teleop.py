@@ -20,6 +20,7 @@ Parse user input to control the robot
 import sys
 import time
 import controller
+import numpy as np
 
 class Joystick:
 
@@ -33,6 +34,20 @@ class Joystick:
         self.quit = False
         self.stdout = sys.stdout
         self.i = 0
+
+        self.LeftJoystickY = 0
+        self.LeftJoystickX = 0
+        self.RightJoystickY = 0
+        self.RightJoystickX = 0
+        self.LeftTrigger = 0
+        self.RightTrigger = 0
+        self.LeftBumper = 0
+        self.RightBumper = 0
+        self.A = 0
+        self.X = 0
+        self.Y = 0
+        self.B = 0
+
         sys.stdout = self.buffer = buffer
 
     def teleop(self, robot, dt):
@@ -47,24 +62,11 @@ class Joystick:
         if c != -1:
             # c = chr(c)
             self.t = 0
-            if self.command or c in "mvt":  # continue longer command
-                if c == "\n":  # submit command
-                    self.execute(self.command, robot)
-                    self.command = ""
-                    self.command_text = ""
-                elif c == "\b":  # backspace
-                    self.command = self.command[:-1]
-                else:  # continue command
-                    self.command += c
-            elif c != "\n":  # start new command
-                self.execute(c, robot)
-                self.command = ""
-                self.command_text = c
+            [self.LeftJoystickX, self.LeftJoystickY, self.RightJoystickX, self.RightJoystickY,
+             self.A, self.X, self.B, self.Y,
+             self.LeftBumper, self.RightBumper, self.LeftTrigger, self.RightTrigger] = c
         self.t += dt
-        if self.command:
-            self.command_text = self.command
-        elif self.t > 0.5:
-            self.command_text = ""
+        self.execute(robot)
 
     def display(self):
         """
@@ -86,64 +88,61 @@ class Joystick:
         if self.i < len(buffer):
             self.stdout.write(buffer[self.i:])
             self.i = len(buffer)
-    def execute(self):
+    def execute(self, robot):
         """
                Execute the given command
-               :param command: Command string
                :param robot: Robot to command
                """
-        inputs = self.joystick.read()
-        print(inputs)
         t = f'{time.perf_counter():.3f}: '
-        try:
-            if c in "mvt":
-                s = command[1:].replace("=", " ").strip(" \t=").split(" ")
-                id = int(s[0].strip(" \t="))
-                val = float(s[1].strip(" \t="))
-                if id not in robot.motors.motors_by_id:
-                    return
-                if c == "m":
-                    print(t + f"Setting motor {id} to angle {val} degrees")
-                    robot.motors.motors_by_id[id].set_angle = val
-                elif c == "v":
-                    print(t + f"Setting motor {id} to speed {val} degrees per second")
-                    robot.motors.motors_by_id[id].set_velocity = val
-                elif c == "t":
-                    print(t + f"Setting motor {id} to torque {val} Newton millimeters")
-                    robot.motors.motors_by_id[id].set_torque = val
-        except (ValueError, IndexError):
-            print(t + f"Invalid command: {command}")
-            pass
-        if c == "p":  # quit
+        # try:
+        #     if c in "mvt":
+        #         s = command[1:].replace("=", " ").strip(" \t=").split(" ")
+        #         id = int(s[0].strip(" \t="))
+        #         val = float(s[1].strip(" \t="))
+        #         if id not in robot.motors.motors_by_id:
+        #             return
+        #         if c == "m":
+        #             print(t + f"Setting motor {id} to angle {val} degrees")
+        #             robot.motors.motors_by_id[id].set_angle = val
+        #         elif c == "v":
+        #             print(t + f"Setting motor {id} to speed {val} degrees per second")
+        #             robot.motors.motors_by_id[id].set_velocity = val
+        #         elif c == "t":
+        #             print(t + f"Setting motor {id} to torque {val} Newton millimeters")
+        #             robot.motors.motors_by_id[id].set_torque = val
+        # except (ValueError, IndexError):
+        #     print(t + f"Invalid command: {command}")
+        #     pass
+        if self.B:  # B Button
             sys.stdout = self.stdout
             self.quit = True
-        elif c == " ":
+        elif self.A: # A Button
             robot.stop()
             print(t + "Stop")
-        elif c == "w":
+        elif self.LeftJoystickY > 0.05: # X Button
             robot.drive(-0.4)
             print(t + "Forward")
-        elif c == "s":
+        elif self.LeftJoystickY < -0.05:
             robot.drive(0.4)
             print(t + "Reverse")
-        elif c == "a":
+        elif self.LeftJoystickX > 0.05:
             robot.strafe(-0.4)
             print(t + "Left")
-        elif c == "d":
+        elif self.LeftJoystickX < -0.05:
             robot.strafe(0.4)
             print(t + "Right")
-        elif c == "q":
+        elif self.RightJoystickX < -0.05:
             robot.turn(0.4)
             print(t + "CCW")
-        elif c == "e":
+        elif self.RightJoystickX > 0.05:
             robot.turn(-0.4)
             print(t + "CW")
-        elif c == "r":
-            if not robot.motors.opened:
-                print(t + "Reconnect")
-                robot.motors.connect()
-            print(t + "Enable")
-            robot.motors.enable()
+        # elif c == "r":
+        #     if not robot.motors.opened:
+        #         print(t + "Reconnect")
+        #         robot.motors.connect()
+        #     print(t + "Enable")
+        #     robot.motors.enable()
 class Terminal:
 
     def __init__(self, terminal, buffer):
