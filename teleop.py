@@ -119,18 +119,18 @@ class Joystick:
         elif self.A: # A Button
             robot.stop()
             print(t + "Stop")
-        elif self.LeftJoystickY > 0.05: # X Button
-            robot.drive(-0.4)
-            print(t + "Forward")
-        elif self.LeftJoystickY < -0.05:
-            robot.drive(0.4)
-            print(t + "Reverse")
-        elif self.LeftJoystickX > 0.05:
-            robot.strafe(-0.4)
-            print(t + "Left")
-        elif self.LeftJoystickX < -0.05:
-            robot.strafe(0.4)
-            print(t + "Right")
+        elif np.abs(self.LeftJoystickY) > 0.05 and np.abs(self.LeftJoystickX) > 0.05: # X Button
+            robot.strafe_drive(-0.4, self.LeftJoystickX, self.LeftJoystickY)
+            print(t + "Strafe-Drive")
+        # elif self.LeftJoystickY < -0.05:
+        #     robot.drive(0.4)
+        #     print(t + "Reverse")
+        # elif self.LeftJoystickX > 0.05:
+        #     robot.strafe(-0.4)
+        #     print(t + "Left")
+        # elif self.LeftJoystickX < -0.05:
+        #     robot.strafe(0.4)
+        #     print(t + "Right")
         elif self.RightJoystickX < -0.05:
             robot.turn(0.4)
             print(t + "CCW")

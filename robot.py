@@ -53,6 +53,19 @@ class Robot:
             else:
                 self.motors.get(id).set_angle = 90 # * np.sign(v)
 
+    def strafe_drive(self, v, x, y):
+        for i, id in enumerate(drive_ids):
+            if (id == 4):
+                self.motors.get(id).set_velocity = -1 * v * self.motors.get(id).speed
+            else:
+                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+        angle = np.arctan(y/x)
+        for i, id in enumerate(steer_ids):
+            if (id == 7):
+                self.motors.get(id).set_angle = -1 * angle # * np.sign(v)
+            else:
+                self.motors.get(id).set_angle = angle # * np.sign(v)
+
     def turn(self, v):
         """
         Turn CW/CCW
