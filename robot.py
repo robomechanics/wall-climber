@@ -31,9 +31,9 @@ class Robot:
         """
         for i, id in enumerate(drive_ids):
             if (id == 1):
-                self.motors.get(id).set_velocity = -1 * v * self.motors.get(id).speed
-            else:
                 self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+            else:
+                self.motors.get(id).set_velocity = -2 * v * self.motors.get(id).speed
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = 0
 
@@ -53,18 +53,34 @@ class Robot:
             else:
                 self.motors.get(id).set_angle = 90 # * np.sign(v)
 
+    def hold_four(self):
+        for i, id in enumerate(steer_ids):
+            if id in [7, 8, 10]:
+                self.motors.get(id).set_angle = -90
+            else:
+                self.motors.get(id).set_angle = 90
+
+    def hold_two(self):
+        self.motors.get(3).set_angle = 90
+        self.motors.get(7).set_angle = -90
+        self.motors.get(8).set_angle = 0
+        self.motors.get(10).set_angle = 0
+
+    def set_straight(self):
+        for i, id in enumerate(steer_ids):
+            self.motors.get(id).set_angle = 0
     def strafe_drive(self, v, x, y):
         for i, id in enumerate(drive_ids):
-            if (id == 4):
-                self.motors.get(id).set_velocity = -1 * v * self.motors.get(id).speed
-            else:
+            if id == 1:
                 self.motors.get(id).set_velocity = v * self.motors.get(id).speed
-        angle = np.arctan(y/x)
-        for i, id in enumerate(steer_ids):
-            if (id == 7):
-                self.motors.get(id).set_angle = -1 * angle # * np.sign(v)
             else:
-                self.motors.get(id).set_angle = angle # * np.sign(v)
+                self.motors.get(id).set_velocity = -2 * v * self.motors.get(id).speed
+        angle = np.arctan(x/y)
+        for i, id in enumerate(steer_ids):
+            if id in [3, 7, 8]:
+                self.motors.get(id).set_angle = -90 * angle # * np.sign(v)
+            else:
+                self.motors.get(id).set_angle = 90 * angle # * np.sign(v)
 
     def turn(self, v):
         """

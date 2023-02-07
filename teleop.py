@@ -22,6 +22,7 @@ import time
 import controller
 import numpy as np
 
+
 class Joystick:
 
     def __init__(self, terminal, buffer):
@@ -88,12 +89,14 @@ class Joystick:
         if self.i < len(buffer):
             self.stdout.write(buffer[self.i:])
             self.i = len(buffer)
+
     def execute(self, robot):
         """
                Execute the given command
                :param robot: Robot to command
                """
         t = f'{time.perf_counter():.3f}: '
+        self.stdout.write(str(self.LeftJoystickY))
         # try:
         #     if c in "mvt":
         #         s = command[1:].replace("=", " ").strip(" \t=").split(" ")
@@ -114,14 +117,24 @@ class Joystick:
         #     print(t + f"Invalid command: {command}")
         #     pass
         if self.B:  # B Button
+            robot.stop()
             sys.stdout = self.stdout
             self.quit = True
-        elif self.A: # A Button
-            robot.stop()
+        elif self.A:  # A Button
+            robot.hold_two()
             print(t + "Stop")
-        elif np.abs(self.LeftJoystickY) > 0.05 and np.abs(self.LeftJoystickX) > 0.05: # X Button
-            robot.strafe_drive(-0.4, self.LeftJoystickX, self.LeftJoystickY)
-            print(t + "Strafe-Drive")
+        elif self.Y:
+            robot.hold_four()
+            print("Hold Four")
+        elif self.X:
+            robot.set_straight()
+            print("Set Straight")
+        elif np.abs(self.LeftJoystickY) > 0.06 and np.abs(self.LeftJoystickX) > 0.06:  # X Button
+            robot.strafe_drive(self.LeftJoystickY, self.LeftJoystickX, self.LeftJoystickY)
+            print(t + "Strafe-Drive " + str(self.LeftJoystickY))
+        elif np.abs(self.LeftJoystickY) > 0.06 > np.abs(self.LeftJoystickX):  # X Button
+            robot.drive(self.LeftJoystickY)
+            print(t + "Drive " + str(self.LeftJoystickY))
         # elif self.LeftJoystickY < -0.05:
         #     robot.drive(0.4)
         #     print(t + "Reverse")
@@ -143,6 +156,10 @@ class Joystick:
         #         robot.motors.connect()
         #     print(t + "Enable")
         #     robot.motors.enable()
+        else:
+            robot.stop()
+
+
 class Terminal:
 
     def __init__(self, terminal, buffer):
