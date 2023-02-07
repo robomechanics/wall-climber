@@ -27,6 +27,7 @@ class Joystick:
 
     def __init__(self, terminal, buffer):
         self.terminal = terminal
+        self.terminal.nodelay(True)
         self.joystick = controller.XboxController()
         self.command = ""
         self.command_text = ""
@@ -129,8 +130,8 @@ class Joystick:
         elif self.X:
             robot.set_straight()
             print("Set Straight")
-        elif np.abs(self.LeftJoystickY) > 0.06 and np.abs(self.LeftJoystickX) > 0.06:  # X Button
-            robot.strafe_drive(self.LeftJoystickY, self.LeftJoystickX, self.LeftJoystickY)
+        elif np.abs(self.LeftJoystickY) > 0.06 or np.abs(self.LeftJoystickX) > 0.06:  # X Button
+            robot.strafe_drive(self.LeftJoystickX, self.LeftJoystickY)
             print(t + "Strafe-Drive " + str(self.LeftJoystickY))
         elif np.abs(self.LeftJoystickY) > 0.06 > np.abs(self.LeftJoystickX):  # X Button
             robot.drive(self.LeftJoystickY)

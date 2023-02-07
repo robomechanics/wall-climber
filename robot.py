@@ -10,15 +10,15 @@ FR = 2  # Front right
 RL = 3  # Rear left
 RR = 4  # Rear right
 
-drive_ids = (9, 4, 5, 1)
-steer_ids = (3, 7, 8, 10)
-steer_offsets = (-45+180, -25, 0, 0)
+drive_ids = (1, 5, 4, 9)
+steer_ids = (10, 8, 7, 3)
+steer_offsets = (0, 0, -25+52, 45+180)
 
 
 class Robot:
     def __init__(self, motors):
-        self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(9, 1))
-        self.steer_motors = motors.add(steer_ids, 'XM430-W210-T', mirror=(8, 7),
+        self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(4, 1))
+        self.steer_motors = motors.add(steer_ids, 'XM430-W210-T',
                                 offset={steer_ids[i]: steer_offsets[i] for i in range(4)})
         motors.enable(drive_ids, velocity_mode=True)
         motors.enable(steer_ids, velocity_mode=False)
@@ -30,10 +30,7 @@ class Robot:
         :param v: Velocity scaled from -1 (reverse) to 1 (forward)
         """
         for i, id in enumerate(drive_ids):
-            if (id == 1):
-                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
-            else:
-                self.motors.get(id).set_velocity = -2 * v * self.motors.get(id).speed
+            self.motors.get(id).set_velocity = v * self.motors.get(id).speed
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = 0
 
@@ -69,18 +66,17 @@ class Robot:
     def set_straight(self):
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = 0
-    def strafe_drive(self, v, x, y):
-        for i, id in enumerate(drive_ids):
-            if id == 1:
-                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
-            else:
-                self.motors.get(id).set_velocity = -2 * v * self.motors.get(id).speed
-        angle = np.arctan(x/y)
+
+    def strafe_drive(self, x, y):
+        v = np.sqrt(x**2 + y**2)
+        angle = np.degrees(np.arctan2(x, y))
+        if abs(angle) > 135:
+            angle -= 180 * np.sign(angle)
+            v *= -1
         for i, id in enumerate(steer_ids):
-            if id in [3, 7, 8]:
-                self.motors.get(id).set_angle = -90 * angle # * np.sign(v)
-            else:
-                self.motors.get(id).set_angle = 90 * angle # * np.sign(v)
+            self.motors.get(id).set_angle = angle
+        for i, id in enumerate(drive_ids):
+            self.motors.get(id).set_velocity = v * self.motors.get(id).speed
 
     def turn(self, v):
         """
@@ -89,11 +85,8 @@ class Robot:
         """
         drive_dirs = (-1, 1, -1, 1)
         for i, id in enumerate(drive_ids):
-            if (id == 1):
-                self.motors.get(id).set_velocity = -1 * drive_dirs[i] * v * self.motors.get(id).speed
-            else:
-                self.motors.get(id).set_velocity = drive_dirs[i] * v * self.motors.get(id).speed
-        steer_dirs = (-1, 1, 1, 1)
+            self.motors.get(id).set_velocity = drive_dirs[i] * v * self.motors.get(id).speed
+        steer_dirs = (1, -1, -1, 1)
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = steer_dirs[i] * 60
 

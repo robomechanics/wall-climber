@@ -460,7 +460,7 @@ class Motor:
         self.upper = upper                      # motor upper angle limit (deg)
         self.mirror = -1 if mirror else 1       # sign of motor direction (1 or -1)
         self.stall = stall*1000                 # stall torque (Nmm)
-        self.speed = speed*6                    # no load speed (deg/s)
+        self.speed = speed*5.5                  # no load speed (deg/s)
         self.protocol = protocol                # communication protocol (1 or 2)
         self.offset = offset                    # angle offset (deg)
         self.angle = 0                          # angle read from motor (deg)
