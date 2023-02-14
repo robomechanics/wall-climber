@@ -58,7 +58,7 @@ class Joystick:
         :param robot: Robot to command
         :param dt: Time since last teleop update
         """
-        # c = self.terminal.getch()
+        self.terminal.getch()
         c = self.joystick.read()
         self.stdout.write(str(c) + "\n")
         if c != -1:
