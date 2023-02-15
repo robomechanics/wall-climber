@@ -10,14 +10,14 @@ FR = 2  # Front right
 RL = 3  # Rear left
 RR = 4  # Rear right
 
-drive_ids = (1, 5, 4, 9)
-steer_ids = (10, 8, 7, 3)
-steer_offsets = (0, 0, -25+52, 45+180)
+drive_ids = (5, 6, 7, 8)
+steer_ids = (1, 2, 3, 4)
+steer_offsets = (180-17, 180, -17, 0)
 
 
 class Robot:
     def __init__(self, motors):
-        self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(4, 1))
+        self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(5, 7))
         self.steer_motors = motors.add(steer_ids, 'XM430-W210-T',
                                 offset={steer_ids[i]: steer_offsets[i] for i in range(4)})
         motors.enable(drive_ids, velocity_mode=True)

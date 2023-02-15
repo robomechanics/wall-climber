@@ -100,5 +100,5 @@ class XboxController(object):
 
 if __name__ == '__main__':
     joy = XboxController()
-    while True:
-        print(joy.read())
+    # while True:
+        # print(joy.read())

@@ -58,7 +58,7 @@ class Joystick:
         :param robot: Robot to command
         :param dt: Time since last teleop update
         """
-        self.terminal.getch()
+        # self.terminal.getch()
         c = self.joystick.read()
         self.stdout.write(str(c) + "\n")
         if c != -1:
@@ -269,10 +269,10 @@ class Terminal:
             robot.drive(0.4)
             print(t + "Reverse")
         elif c == "a":
-            robot.strafe(-0.4)
+            robot.strafe(0.4)
             print(t + "Left")
         elif c == "d":
-            robot.strafe(0.4)
+            robot.strafe(-0.4)
             print(t + "Right")
         elif c == "q":
             robot.turn(0.4)
