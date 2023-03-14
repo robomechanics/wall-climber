@@ -12,7 +12,7 @@ RR = 4  # Rear right
 
 drive_ids = (5, 6, 7, 8)
 steer_ids = (1, 2, 3, 4)
-steer_offsets = (180-17, 180, -17, 0)
+steer_offsets = (-17, 0, -17, 0)
 
 
 class Robot:
