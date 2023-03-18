@@ -13,12 +13,12 @@ import os
 
 def main_loop(terminal, buffer):
     interface = Terminal(terminal, buffer)
-    # interface = Joystick(terminal, buffer)
+    #interface = Joystick(terminal, buffer)
     print(os.name)
     if os.name == 'nt':
         port = "COM5"          # Windows
     else:
-        port = "/dev/tty.usbserial-FT6Z5QTQ"   # Linux
+        port = "/dev/ttyUSB0"   # Linux
     robot = Robot(Motors(port=port, baud=57600))
 
     t = time.perf_counter()     # current time in seconds

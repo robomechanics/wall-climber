@@ -21,7 +21,7 @@ import sys
 import time
 import controller
 import numpy as np
-
+from listener import subscr
 
 class Joystick:
 
@@ -50,6 +50,8 @@ class Joystick:
         self.Y = 0
         self.B = 0
 
+        self.deadZone = 0.1
+
         sys.stdout = self.buffer = buffer
 
     def teleop(self, robot, dt):
@@ -59,14 +61,34 @@ class Joystick:
         :param dt: Time since last teleop update
         """
         # self.terminal.getch()
-        c = self.joystick.read()
+        #c = self.joystick.read()
+        
+        sub = subscr()
+        
+        c = sub.get_data()
+
         self.stdout.write(str(c) + "\n")
-        if c != -1:
-            # c = chr(c)
-            self.t = 0
-            [self.LeftJoystickX, self.LeftJoystickY, self.RightJoystickX, self.RightJoystickY,
-             self.A, self.X, self.B, self.Y,
-             self.LeftBumper, self.RightBumper, self.LeftTrigger, self.RightTrigger] = c
+        #if c != -1:
+        #    # c = chr(c)
+        #    self.t = 0
+        #    [self.LeftJoystickX, self.LeftJoystickY, self.RightJoystickX, self.RightJoystickY,
+        #     self.A, self.X, self.B, self.Y,
+        #     self.LeftBumper, self.RightBumper, self.LeftTrigger, self.RightTrigger] = c
+        
+        if c!= None:
+            self.LeftJoystickX = c[0][0]
+            self.LeftJoystickY = c[0][1]
+            self.RightJoystickX = c[0][2]
+            self.RightJoystickY = c[0][3]
+            self.RightTrigger = c[0][4]
+            self.LeftTrigger = c[0][5]
+        
+            self.A = c[1][0]
+            self.B = c[1][1]
+            self.X = c[1][3]
+            self.Y = c[1][4]
+        
+        
         self.t += dt
         self.execute(robot)
 
@@ -121,21 +143,30 @@ class Joystick:
             robot.stop()
             sys.stdout = self.stdout
             self.quit = True
+        elif self.A and (np.abs(self.LeftJoystickY) > self.deadZone):
+            robot.hold_two_drive(self.LeftJoystickY)
+            print(t + "Hold Front and Drive" + str(self.LeftJoystickY))
         elif self.A:  # A Button
             robot.hold_two()
-            print(t + "Stop")
+            print(t + "Hold Two")
         elif self.Y:
             robot.hold_four()
             print("Hold Four")
         elif self.X:
             robot.set_straight()
             print("Set Straight")
-        elif np.abs(self.LeftJoystickY) > 0.06 or np.abs(self.LeftJoystickX) > 0.06:  # X Button
+        elif np.abs(self.LeftJoystickY) > self.deadZone or np.abs(self.LeftJoystickX) > self.deadZone:  # X Button
             robot.strafe_drive(self.LeftJoystickX, self.LeftJoystickY)
             print(t + "Strafe-Drive " + str(self.LeftJoystickY))
-        elif np.abs(self.LeftJoystickY) > 0.06 > np.abs(self.LeftJoystickX):  # X Button
+        elif np.abs(self.LeftJoystickY) > self.deadZone > np.abs(self.LeftJoystickX):  # X Button
             robot.drive(self.LeftJoystickY)
             print(t + "Drive " + str(self.LeftJoystickY))
+        elif self.RightTrigger > 0:
+            robot.lift(1)
+            print(t + "Lift" + str(self.RightTrigger))
+        elif self.LeftTrigger > 0:
+            robot.lift(-1)
+            print(t + "Drop" + str(self.LeftTrigger))
         # elif self.LeftJoystickY < -0.05:
         #     robot.drive(0.4)
         #     print(t + "Reverse")
@@ -146,10 +177,10 @@ class Joystick:
         #     robot.strafe(0.4)
         #     print(t + "Right")
         elif self.RightJoystickX < -0.05:
-            robot.turn(0.4)
+            robot.turn(-0.4)
             print(t + "CCW")
         elif self.RightJoystickX > 0.05:
-            robot.turn(-0.4)
+            robot.turn(0.4)
             print(t + "CW")
         # elif c == "r":
         #     if not robot.motors.opened:
@@ -178,6 +209,22 @@ class Terminal:
         self.stdout = sys.stdout
         self.i = 0
         sys.stdout = self.buffer = buffer
+        
+        self.LeftJoystickY = 0
+        self.LeftJoystickX = 0
+        self.RightJoystickY = 0
+        self.RightJoystickX = 0
+        self.LeftTrigger = 0
+        self.RightTrigger = 0
+        self.LeftBumper = 0
+        self.RightBumper = 0
+        self.A = 0
+        self.X = 0
+        self.Y = 0
+        self.B = 0
+        self.sub = subscr()
+
+        self.deadZone = 0.1
 
     def teleop(self, robot, dt):
         """
@@ -186,6 +233,25 @@ class Terminal:
         :param dt: Time since last teleop update
         """
         c = self.terminal.getch()
+        
+        cont = self.sub.get_data()
+        #print(cont)
+        
+        if cont!= None:
+            self.LeftJoystickX = cont[0][0]
+            self.LeftJoystickY = cont[0][1]
+            self.RightJoystickX = cont[0][2]
+            self.RightJoystickY = cont[0][3]
+            self.RightTrigger = cont[0][4]
+            self.LeftTrigger = cont[0][5]
+        
+            self.A = cont[1][0]
+            self.B = cont[1][1]
+            self.X = cont[1][3]
+            self.Y = cont[1][4]
+            
+        #print(self.B)
+        
         if c != -1:
             c = chr(c)
             self.t = 0
@@ -207,6 +273,7 @@ class Terminal:
             self.command_text = self.command
         elif self.t > 0.5:
             self.command_text = ""
+        self.execute(["+"], robot)
 
     def display(self):
         """
@@ -236,6 +303,8 @@ class Terminal:
         :param robot: Robot to command
         """
         c = command[0]
+
+        
         t = f'{time.perf_counter():.3f}: '
         try:
             if c in "mvt":
@@ -256,17 +325,55 @@ class Terminal:
         except (ValueError, IndexError):
             print(t + f"Invalid command: {command}")
             pass
-        if c == "p":  # quit
+        
+        print(self.LeftTrigger, self.RightTrigger)
+        if c == "+":
+            pass
+        if self.B:  # B Button
+            print("WE HIT B")
+            robot.stop()
+            sys.stdout = self.stdout
+            self.quit = True
+        elif self.A and (np.abs(self.LeftJoystickY) > self.deadZone):
+            robot.hold_two_drive(self.LeftJoystickY)
+            print(t + "Hold Front and Drive" + str(self.LeftJoystickY))
+        elif self.A:  # A Button
+            robot.hold_two()
+            print(t + "Hold Two")
+        elif self.Y:
+            robot.hold_four()
+            print("Hold Four")
+        elif np.abs(self.LeftJoystickY) > self.deadZone and self.X:  # X Button
+            robot.drive(-1*self.LeftJoystickY)
+            print(t + "Drive Straight" + str(self.LeftJoystickY))
+        elif self.X:
+            robot.set_straight()
+            print("Set Straight")
+        elif np.abs(self.LeftJoystickY) > self.deadZone or np.abs(self.LeftJoystickX) > self.deadZone:  # X Button
+            robot.strafe_drive(self.LeftJoystickX, -1*self.LeftJoystickY)
+            print(t + "Strafe-Drive " + str(self.LeftJoystickY))
+        elif np.abs(self.LeftJoystickY) > self.deadZone > np.abs(self.LeftJoystickX):  # X Button
+            robot.drive(-1*self.LeftJoystickY)
+            print(t + "Drive " + str(self.LeftJoystickY))
+        elif self.RightJoystickX < -0.05:
+            robot.turn(0.4)
+            print(t + "CCW")
+        elif self.RightJoystickX > 0.05:
+            robot.turn(-0.4)
+            print(t + "CW")
+        elif c == "p":  # quit
+            robot.disable_steer()
+            robot.stop()
             sys.stdout = self.stdout
             self.quit = True
         elif c == " ":
             robot.stop()
             print(t + "Stop")
         elif c == "w":
-            robot.drive(-0.4)
+            robot.drive(-0.6)
             print(t + "Forward")
         elif c == "s":
-            robot.drive(0.4)
+            robot.drive(0.6)
             print(t + "Reverse")
         elif c == "a":
             robot.strafe(0.4)
@@ -274,15 +381,49 @@ class Terminal:
         elif c == "d":
             robot.strafe(-0.4)
             print(t + "Right")
-        elif c == "q":
+        elif c == "e":
             robot.turn(0.4)
             print(t + "CCW")
-        elif c == "e":
+        elif c == "q":
             robot.turn(-0.4)
             print(t + "CW")
+        elif c == 'f':
+            robot.hold_two_drive(0.5)
+            print(t + "Hold Front and Drive Forward")
+        elif c == 'b':
+            robot.hold_two_drive(-0.5)
+            print(t + "Hold Front and Drive Backward")
+        elif c == '2':  # A Button
+            robot.hold_two()
+            print(t + "Hold Two")
+        elif c == '4':
+            robot.hold_four()
+            print("Hold Four")
+        elif c == '1':
+            robot.set_straight()
+            print("Set Straight")
         elif c == "r":
             if not robot.motors.opened:
                 print(t + "Reconnect")
                 robot.motors.connect()
             print(t + "Enable")
             robot.motors.enable()
+        else:
+            robot.stop()
+
+        if c == 'l':
+            robot.lift(1)
+            print(t + "Lift")
+        elif c == ';':
+            robot.lift(-1)
+            print(t + "Drop")
+        elif self.RightTrigger < 0:
+            robot.lift(-1)
+            print(t + "Lift" + str(self.RightTrigger))
+        elif self.LeftTrigger < 0:
+            robot.lift(1)
+            print(t + "Drop" + str(self.LeftTrigger))
+        else:
+            robot.lift(0)
+
+        robot.print_lift()
