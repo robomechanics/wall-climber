@@ -34,6 +34,7 @@ def main_loop(terminal, buffer):
         interface.teleop(robot, dt)
         interface.display()
 
+        robot.motors.read_angle()
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()
@@ -47,6 +48,8 @@ def main_loop(terminal, buffer):
             interface.status[0] = f"--- {robot.motors.status} | " \
                                   f"{(t - t0) / loops * 1000:.2f} ms | " \
                                   f"{temp}°C | " \
+                                  f"Motor 9 {robot.lift_motors[0].angle} | " \
+                                  f"Motor 10 {robot.lift_motors[1].angle} | " \
                                   f"{volt}V ---"
             t0 = t
             loops = 0

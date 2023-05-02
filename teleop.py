@@ -244,11 +244,13 @@ class Terminal:
             self.RightJoystickY = cont[0][3]
             self.RightTrigger = cont[0][4]
             self.LeftTrigger = cont[0][5]
-        
+
             self.A = cont[1][0]
             self.B = cont[1][1]
             self.X = cont[1][3]
             self.Y = cont[1][4]
+            self.LeftBumper = cont[1][6]
+            self.RightBumper = cont[1][7]
             
         #print(self.B)
         
@@ -326,7 +328,7 @@ class Terminal:
             print(t + f"Invalid command: {command}")
             pass
         
-        print(self.LeftTrigger, self.RightTrigger)
+        # print(self.LeftTrigger, self.RightTrigger)
         if c == "+":
             pass
         if self.B:  # B Button
@@ -343,8 +345,14 @@ class Terminal:
         elif self.Y:
             robot.hold_four()
             print("Hold Four")
-        elif np.abs(self.LeftJoystickY) > self.deadZone and self.X:  # X Button
-            robot.drive(-1*self.LeftJoystickY)
+        elif self.LeftJoystickY > self.deadZone and self.X:  # X Button
+            robot.drive(-1 * 0.6)
+            print(t + "Drive Straight" + str(self.LeftJoystickY))
+        elif self.LeftJoystickY > self.deadZone and self.X and self.A:  # X Button
+            robot.hold_two_drive(-1*0.6)
+            print(t + "Drive Straight" + str(self.LeftJoystickY))
+        elif self.LeftJoystickY < -1*self.deadZone and self.X:  # X Button
+            robot.drive(1)
             print(t + "Drive Straight" + str(self.LeftJoystickY))
         elif self.X:
             robot.set_straight()
@@ -408,22 +416,51 @@ class Terminal:
                 robot.motors.connect()
             print(t + "Enable")
             robot.motors.enable()
+        elif c == 'j':
+            for i, id in enumerate(robot.drive_ids):
+                if robot.motors.get(id).torque_mode:
+                    robot.motors.enable(robot.drive_ids, velocity_mode=True, torque_mode=False)
+                    for i, id in enumerate(robot.drive_ids):
+                        robot.motors.get(id).goal_torque = 200
+                        robot.motors.get(id).set_torque = 200
+                        print(id, "GOING INTO VELOCITY MODE")
+        elif c == 'k':
+            for i, id in enumerate(robot.drive_ids):
+                if robot.motors.get(id).velocity_mode:
+                    robot.motors.enable(robot.drive_ids, velocity_mode=False, torque_mode=True)
+                    for i, id in enumerate(robot.drive_ids):
+                        robot.motors.get(id).goal_torque = 0
+                        robot.motors.get(id).set_torque = 0
+                        print(id, "GOING INTO TORQUE MODE")
+
+
+        # print(robot.motors.get(5).set_velocity)
         else:
             robot.stop()
 
         if c == 'l':
-            robot.lift(1)
-            print(t + "Lift")
+            # robot.lift(1)
+            robot.raise_elevator()
+            print(t + "Elevator up")
         elif c == ';':
-            robot.lift(-1)
-            print(t + "Drop")
+            # robot.lift(-1)
+            print(t + "Elevator zero")
+            robot.zero_elevator()
+        elif c == "'":
+            # robot.lift(-1)
+            print(t + "Elevator down")
+            robot.lower_elevator()
+        elif self.LeftBumper:
+            robot.raise_elevator()
+            print(t + "Elevator up")
+        elif self.RightBumper:
+            # robot.lift(-1)
+            print(t + "Elevator down")
+            robot.lower_elevator()
         elif self.RightTrigger < 0:
-            robot.lift(-1)
-            print(t + "Lift" + str(self.RightTrigger))
-        elif self.LeftTrigger < 0:
-            robot.lift(1)
-            print(t + "Drop" + str(self.LeftTrigger))
+            print(t + "Elevator zero")
+            robot.zero_elevator()
         else:
             robot.lift(0)
 
-        robot.print_lift()
+        # robot.print_lift()

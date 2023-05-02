@@ -148,7 +148,7 @@ class Motors:
                 self.packetHandler2.writeTxRx(self.portHandler, id, address, length, float2bytes(value, length))
             time.sleep(.001)
 
-    def enable(self, ids=None, velocity_mode=False):
+    def enable(self, ids=None, velocity_mode=False, torque_mode=False):
         """
         Torque enable motors and reset operating mode
 
@@ -169,15 +169,19 @@ class Motors:
                         self.write(motor.id, *CCW_ANGLE_LIMIT_AX, 1023)
                     self.write(motor.id, *TORQUE_ENABLE_AX, 1)
                     motor.velocity_mode = velocity_mode
+                    motor.torque_mode = torque_mode
             elif series == "XM":
                 for motor in motor_list:
                     self.write(motor.id, *TORQUE_ENABLE_XM, 0)
                     if velocity_mode:  # Velocity control mode
                         self.write(motor.id, *OPERATING_MODE_XM, 1)
+                    elif torque_mode:
+                        self.write(motor.id, *OPERATING_MODE_XM, 0)
                     else:  # Current-based position control mode
                         self.write(motor.id, *OPERATING_MODE_XM, 5)
                     self.write(motor.id, *TORQUE_ENABLE_XM, 1)
                     motor.velocity_mode = velocity_mode
+                    motor.torque_mode = torque_mode
 
     def disable(self, ids=None):
         """
@@ -223,6 +227,8 @@ class Motors:
                     if raw:
                         self.status = "Connected"
                     motor.angle = (raw / 4095.0 * 360 - 180) * motor.mirror - motor.offset
+                    # if self.status != "No Motors":
+                        # print(motor.id, motor.angle)
             else:
                 print("read_angle not implemented yet for " + series + "series")
                 continue
@@ -378,7 +384,11 @@ class Motors:
             elif series == "XM":
                 sync = GroupSyncWrite(self.portHandler, self.packetHandler2, *GOAL_CURRENT_XM)
                 for motor in motor_list:
-                    raw = min(abs(motor.set_torque), motor.stall) * 2300 / motor.stall / 2.69
+
+                    if motor.torque_mode:
+                        raw = min(motor.set_torque * motor.mirror, motor.stall) * 2300 / motor.stall / 2.69
+                    else:
+                        raw = min(abs(motor.set_torque), motor.stall) * 2300 / motor.stall / 2.69
                     # raw = abs(motor.set_torque) * 2300 / motor.stall / 2.69
                     sync.addParam(motor.id, float2bytes(raw, sync.data_length))
                 if self.opened:
@@ -473,6 +483,7 @@ class Motor:
         self.set_torque = self.stall            # torque to write to motor (Nmm)
         self.goal_torque = self.set_torque      # torque setpoint (Nmm)
         self.velocity_mode = False              # control motor velocity instead of motor angle
+        self.torque_mode = False                # control motor torque instead of motor angle
         self.voltage = 0                        # motor input voltage (V)
         self.temperature = 0                    # motor internal temperature (deg C)
         self.torque_list = (0.0, ) * average_torque    # List of the last average_torque torques
