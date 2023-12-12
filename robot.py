@@ -3,6 +3,7 @@ Evaluate current robot state and modify setpoints using forward and inverse kine
 """
 
 import numpy as np
+#import matplotlib.pyplot as plt
 
 # Wheel numbering
 FL = 1  # Front left
@@ -13,7 +14,7 @@ RR = 4  # Rear right
 drive_ids = (5, 6, 7, 8)
 steer_ids = (1, 2, 3, 4)
 lift_ids = (9, 10)
-steer_offsets = (-160, -20, 0, 0)
+steer_offsets = (-160, -20, 0, -45)
 
 elevator_left_offset = -253
 elevator_right_offset = -406
@@ -29,10 +30,12 @@ class Robot:
         motors.enable(lift_ids, velocity_mode=False)
         self.drive_ids = drive_ids
         self.motors = motors
+        self.time = []
+        self.torques = [[],[],[],[],[],[],[],[],[],[]]
+        self.velocities = [[],[],[],[],[],[],[],[],[],[]]
         for i, id in enumerate(lift_ids):
             self.motors.get(id).goal_torque = 400
             self.motors.get(id).set_torque = 400
-
         for i, id in enumerate(drive_ids):
             self.motors.get(id).goal_torque = 0
             self.motors.get(id).set_torque = 0
@@ -151,8 +154,17 @@ class Robot:
             v *= -1
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = angle
-        for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_torque = v * self.motors.get(id).stall / 2
+        
+        #for i, id in enumerate(drive_ids):
+        #    self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+        if self.motors.get(7).torque_mode:
+            print("torque mode strafe drive")
+            for i, id in enumerate(drive_ids):
+                self.motors.get(id).set_torque = v * self.motors.get(id).stall / 2
+        if self.motors.get(7).velocity_mode:
+            print("vel mode strafe drive")
+            for i, id in enumerate(drive_ids):
+                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
 
     def print_lift(self):
         for i, id in enumerate(lift_ids):
@@ -210,3 +222,18 @@ class Robot:
     def lower_elevator(self):
         self.lift_motors[0].set_angle = 194.8 + elevator_left_offset + 100
         self.lift_motors[1].set_angle = 156.4 + elevator_right_offset + 100
+
+
+    def plot_torque_vel(self):
+        #fig, axs = plt.subplots(10, 2)
+        #fig.suptitle('Vertically stacked subplots')
+        for i in range(10):
+            t = self.time
+            torque = self.torques[i]
+            velocity = self.velocities[i]
+            label_torque = "Motor " + str(i) + " torque"
+            label_velocity = "Motor " + str(i) + " velocity"
+         #   axs[i, 0].plot(t, torque, label = label_torque)
+          #  axs[i, 1].plot(t, velocity, label = label_velocity)
+        # plt.legend()
+        #plt.show()

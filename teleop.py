@@ -158,6 +158,7 @@ class Joystick:
         elif np.abs(self.LeftJoystickY) > self.deadZone or np.abs(self.LeftJoystickX) > self.deadZone:  # X Button
             robot.strafe_drive(self.LeftJoystickX, self.LeftJoystickY)
             print(t + "Strafe-Drive " + str(self.LeftJoystickY))
+            print(robot.motors.get(7).torque_mode)
         elif np.abs(self.LeftJoystickY) > self.deadZone > np.abs(self.LeftJoystickX):  # X Button
             robot.drive(self.LeftJoystickY)
             print(t + "Drive " + str(self.LeftJoystickY))
