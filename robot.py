@@ -14,7 +14,7 @@ RR = 4  # Rear right
 drive_ids = (5, 6, 7, 8)
 steer_ids = (1, 2, 3, 4)
 lift_ids = (9, 10)
-steer_offsets = (-160, -20, 0, -45)
+steer_offsets = (-160, -20, 0, 0)
 
 elevator_left_offset = -253
 elevator_right_offset = -406

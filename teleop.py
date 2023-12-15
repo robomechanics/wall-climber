@@ -139,7 +139,7 @@ class Joystick:
         # except (ValueError, IndexError):
         #     print(t + f"Invalid command: {command}")
         #     pass
-        if self.B:  # B Button
+        if False and self.B:  # B Button
             robot.stop()
             sys.stdout = self.stdout
             self.quit = True
@@ -223,6 +223,7 @@ class Terminal:
         self.X = 0
         self.Y = 0
         self.B = 0
+        self.heldB = True
         self.sub = subscr()
 
         self.deadZone = 0.1
@@ -332,7 +333,7 @@ class Terminal:
         # print(self.LeftTrigger, self.RightTrigger)
         if c == "+":
             pass
-        if self.B:  # B Button
+        if False and self.B:  # B Button
             print("WE HIT B")
             robot.stop()
             sys.stdout = self.stdout
@@ -433,7 +434,24 @@ class Terminal:
                         robot.motors.get(id).goal_torque = 0
                         robot.motors.get(id).set_torque = 0
                         print(id, "GOING INTO TORQUE MODE")
-
+        elif self.B and not self.heldB:
+            self.heldB = True
+            for i, id in enumerate(robot.drive_ids):
+                if robot.motors.get(id).velocity_mode:
+                    robot.motors.enable(robot.drive_ids, velocity_mode=False, torque_mode=True)
+                    for i, id in enumerate(robot.drive_ids):
+                        robot.motors.get(id).goal_torque = 0
+                        robot.motors.get(id).set_torque = 0
+                        print(id, "GOING INTO TORQUE MODE")
+        elif (not self.B) and self.heldB:
+            self.heldB = False
+            for i, id in enumerate(robot.drive_ids):
+                if robot.motors.get(id).torque_mode:
+                    robot.motors.enable(robot.drive_ids, velocity_mode=True, torque_mode=False)
+                    for i, id in enumerate(robot.drive_ids):
+                        robot.motors.get(id).goal_torque = 200
+                        robot.motors.get(id).set_torque = 200
+                        print(id, "GOING INTO VELOCITY MODE")
 
         # print(robot.motors.get(5).set_velocity)
         else:
