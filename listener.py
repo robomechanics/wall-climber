@@ -38,20 +38,28 @@
 
 import rospy
 #from std_msgs.msg import String
-from sensor_msgs.msg import Joy
+from sensor_msgs.msg import Joy, Imu
 
 class subscr:
     def __init__(self):
         rospy.init_node('listener', anonymous=True)
         self.controls = ((0,0,0,0,0,0,0,0), (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
-        rospy.Subscriber('/joy', Joy, self.callback)
+        self.orientation = [0, 0, 0]
+        rospy.Subscriber('/joy', Joy, self.update_controls)
+        rospy.Subscriber('/imu/data', Imu, self.update_imu)
         
-    def callback(self, data):
+    def update_controls(self, data):
         self.controls = (data.axes, data.buttons)
         #print(self.controls)
 
+    def update_imu(self, data):
+        self.orientation = [data.orientation.x, data.orientation.y, data.orientation.z]
+
     def get_data(self):
         return self.controls
+    
+    def get_orientation(self):
+        return self.orientation
 
 
 #def callback(data):

@@ -2,14 +2,13 @@
 
 from motors import Motors
 from robot import Robot
-from teleop import Terminal
+from teleop import Terminal, Joystick
 from serial import SerialException
-from teleop import Joystick
+from listener import subscr
 import io
 import time
 import curses           # pip install windows-curses
 import os
-
 
 def main_loop(terminal, buffer):
     interface = Terminal(terminal, buffer)
@@ -19,11 +18,13 @@ def main_loop(terminal, buffer):
         port = "COM5"          # Windows
     else:
         port = "/dev/ttyUSB0"   # Linux
-    robot = Robot(Motors(port=port, baud=57600))
+
+    robot = Robot(Motors(port=port, baud=57600), subscr())
 
     t = time.perf_counter()     # current time in seconds
     t0 = t                      # start time for loop counter in seconds
     loops = 0                   # loop counter for timing code
+
     while not interface.quit:
 
         dt = time.perf_counter() - t
@@ -31,7 +32,7 @@ def main_loop(terminal, buffer):
         if dt > 1:  # Timeout
             continue
 
-        interface.teleop(robot, dt)
+        interface.teleop(robot, dt, robot.listener.get_data())
         interface.display()
 
         robot.motors.read_angle()

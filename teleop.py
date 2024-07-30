@@ -54,7 +54,7 @@ class Joystick:
 
         sys.stdout = self.buffer = buffer
 
-    def teleop(self, robot, dt):
+    def teleop(self, robot, dt, control):
         """
         Check for user input and command robot appropriately
         :param robot: Robot to command
@@ -63,9 +63,9 @@ class Joystick:
         # self.terminal.getch()
         #c = self.joystick.read()
         
-        sub = subscr()
+        #sub = subscr()
         
-        c = sub.get_data()
+        c = control
 
         self.stdout.write(str(c) + "\n")
         #if c != -1:
@@ -224,11 +224,11 @@ class Terminal:
         self.Y = 0
         self.B = 0
         self.heldB = True
-        self.sub = subscr()
+        #self.sub = subscr()
 
         self.deadZone = 0.1
 
-    def teleop(self, robot, dt):
+    def teleop(self, robot, dt, control):
         """
         Check for user input and command robot appropriately
         :param robot: Robot to command
@@ -236,7 +236,8 @@ class Terminal:
         """
         c = self.terminal.getch()
         
-        cont = self.sub.get_data()
+        #cont = self.sub.get_data()
+        cont = control
         #print(cont)
         
         if cont!= None:
@@ -455,7 +456,9 @@ class Terminal:
 
         # print(robot.motors.get(5).set_velocity)
         else:
-            robot.stop()
+            # robot.stop()
+            #print(t + "stopping")
+            pass
 
         if c == 'l':
             # robot.lift(1)

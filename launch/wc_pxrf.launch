@@ -8,4 +8,11 @@
 
     <node name="gui" type="gui.py" pkg="pxrf" output="screen"/>
 
+     <!-- Launch the Microstrain node so the IMU starts publishing data -->
+    <node name="microstrain_intertial_driver" pkg="microstrain_inertial_driver" type="microstrain_inertial_driver_node" output="screen" ns="/">
+
+        <!-- Load the default params file. -->
+        <rosparam file="$(find microstrain_inertial_driver)/microstrain_inertial_driver_common/config/params.yml" command="load" />
+    </node>
+
 </launch>
