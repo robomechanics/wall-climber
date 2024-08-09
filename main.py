@@ -5,21 +5,23 @@ from robot import Robot
 from teleop import Terminal, Joystick
 from serial import SerialException
 from listener import subscr
+import transition
 import io
 import time
 import curses           # pip install windows-curses
 import os
 
 def main_loop(terminal, buffer):
-    interface = Terminal(terminal, buffer)
-    #interface = Joystick(terminal, buffer)
     print(os.name)
     if os.name == 'nt':
         port = "COM5"          # Windows
     else:
         port = "/dev/ttyUSB0"   # Linux
 
-    robot = Robot(Motors(port=port, baud=57600), subscr())
+    sub = subscr()
+    robot = Robot(Motors(port=port, baud=57600))
+    interface = Terminal(sub, terminal, buffer)
+    #interface = Joystick(sub, terminal, buffer)
 
     t = time.perf_counter()     # current time in seconds
     t0 = t                      # start time for loop counter in seconds
@@ -32,8 +34,15 @@ def main_loop(terminal, buffer):
         if dt > 1:  # Timeout
             continue
 
-        interface.teleop(robot, dt, robot.listener.get_data())
-        interface.display()
+        robot.update_state()
+
+        if robot.mode == 0:
+            interface.teleop(robot, dt)
+        elif robot.mode == 1:
+            transition.loop(robot)
+        
+        if type(interface) == Terminal:
+            interface.display()
 
         robot.motors.read_angle()
         robot.motors.write_angle()
@@ -67,7 +76,7 @@ if __name__ == "__main__":
         curses.wrapper(lambda terminal: main_loop(terminal, buf))
         os.system('cls' if os.name == 'nt' else 'clear')
         log = buf.getvalue()
-        for s in log:
-            print(s, end="")
+        #for s in log:
+            #print(s, end="")
     except SerialException:
         print("Disconnected")

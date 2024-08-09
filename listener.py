@@ -39,6 +39,8 @@
 import rospy
 #from std_msgs.msg import String
 from sensor_msgs.msg import Joy, Imu
+import numpy as np
+from scipy.spatial.transform import Rotation
 
 class subscr:
     def __init__(self):
@@ -53,7 +55,10 @@ class subscr:
         #print(self.controls)
 
     def update_imu(self, data):
-        self.orientation = [data.orientation.x, data.orientation.y, data.orientation.z]
+        #q = np.ndarray(data.orientation.w, data.orientation.x, data.orientation.y, data.orientation.z)
+        q = Rotation.from_quat([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
+        e = q.as_euler('xyz', True)
+        self.orientation = [float(e[0]) % 360, float(e[1]) % 360, float(e[2]) % 360]
 
     def get_data(self):
         return self.controls

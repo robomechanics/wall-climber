@@ -3,7 +3,7 @@ Evaluate current robot state and modify setpoints using forward and inverse kine
 """
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # Wheel numbering
 FL = 1  # Front left
@@ -20,7 +20,7 @@ elevator_left_offset = -253
 elevator_right_offset = -406
 
 class Robot:
-    def __init__(self, motors, listener):
+    def __init__(self, motors, l=0.46, h=0.115, r=0.025): # default parameters are Sally's
         self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(5, 7))
         self.steer_motors = motors.add(steer_ids, 'XM430-W210-T',
                                        offset={steer_ids[i]: steer_offsets[i] for i in range(4)})
@@ -33,14 +33,17 @@ class Robot:
         self.drive_ids = drive_ids
         self.motors = motors
 
+        self.l = l
+        self.h = h
+        self.r = r
+
         self.time = []
-        self.torques = [[],[],[],[],[],[],[],[],[],[]]
-        self.velocities = [[],[],[],[],[],[],[],[],[],[]]
+        self.torques = [[0 for i in range(10)] for j in range(10)]
+        self.velocities = [[0 for i in range(10)] for j in range(10)]
+        self.orientation = [[0 for i in range(10)] for j in range(3)]
 
         # 0 is teleop, 1 is transition
         self.mode = 0
-
-        self.listener = listener
 
         for i, id in enumerate(lift_ids):
             self.motors.get(id).goal_torque = 400
@@ -48,6 +51,18 @@ class Robot:
         for i, id in enumerate(drive_ids):
             self.motors.get(id).goal_torque = 0
             self.motors.get(id).set_torque = 0
+
+    def get_l(self):
+        return self.l
+    
+    def get_h(self):
+        return self.h
+    
+    def get_r(self):
+        return self.r
+    
+    def get_pitch(self):
+        return sum(self.orientation[0]) / len(self.orientation[0])
 
     def drive_torque(self, v):
         """
@@ -220,6 +235,26 @@ class Robot:
         # for id in steer_ids:
         #     self.motors.get(id).set_angle = self.motors.get(id).angle
 
+    def set_torque_mode(self, id):
+        self.motors.get(id).torque_mode = True
+        self.motors.get(id).velocity_mode = False
+    
+    def set_velocity_mode(self, id):
+        self.motors.get(id).torque_mode = False
+        self.motors.get(id).velocity_mode = True
+
+    def set_motor_torque(self, id, t):
+        self.motors.get(id).set_torque = t
+
+    def set_motor_velocity(self, id, v):
+        self.motors.get(id).set_velocity = v
+
+    def get_motor_velocity(self, id):
+        return self.velocities[id-1][-1]
+    
+    def get_motor_torque(self, id):
+        return self.torques[id-1][-1]
+
     def zero_elevator(self):
         self.lift_motors[0].set_angle = 13.4 + elevator_left_offset + 100
         self.lift_motors[1].set_angle = 14.1 + elevator_right_offset + 100
@@ -231,6 +266,28 @@ class Robot:
     def lower_elevator(self):
         self.lift_motors[0].set_angle = 194.8 + elevator_left_offset + 100
         self.lift_motors[1].set_angle = 156.4 + elevator_right_offset + 100
+
+    def update_state(self):
+        motor_ids = range(1, 11)
+        self.motors.read_torque(ids=motor_ids)
+        self.motors.read_velocity(ids=motor_ids)
+        for id in motor_ids:
+            self.torques[id-1].pop()
+            self.torques[id-1].insert(0, self.motors.get(id).torque)
+            self.velocities[id-1].pop()
+            self.velocities[id-1].insert(0, self.motors.get(id).velocity)
+        for i in range(len(self.orientation)):
+            self.orientation[i].pop()
+            self.orientation.insert(0, self.listener.get_orientation()[i])
+        #print("Pitch (deg): {0:.3f}".format(self.orientation[0]))
+
+    def get_motor_info(self):
+        motor_ids = range(1, 11)
+        self.motors.read_torque(ids=motor_ids)
+        self.motors.read_velocity(ids=motor_ids)
+        for id in motor_ids:
+            self.torques[id-1].append(self.motors.get(id).torque)
+            self.velocities[id-1].append(self.motors.get(id).velocity)
 
     def plot_torque_vel(self):
         fig, axs = plt.subplots(10, 2)

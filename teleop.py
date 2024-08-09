@@ -25,7 +25,7 @@ from listener import subscr
 
 class Joystick:
 
-    def __init__(self, terminal, buffer):
+    def __init__(self, listener, terminal, buffer):
         self.terminal = terminal
         self.terminal.nodelay(True)
         self.joystick = controller.XboxController()
@@ -52,9 +52,11 @@ class Joystick:
 
         self.deadZone = 0.1
 
+        self.listener = listener
+
         sys.stdout = self.buffer = buffer
 
-    def teleop(self, robot, dt, control):
+    def teleop(self, robot, dt):
         """
         Check for user input and command robot appropriately
         :param robot: Robot to command
@@ -65,9 +67,9 @@ class Joystick:
         
         #sub = subscr()
         
-        c = control
+        c = self.listener.get_data()
 
-        self.stdout.write(str(c) + "\n")
+        #self.stdout.write(str(c) + "\n")
         #if c != -1:
         #    # c = chr(c)
         #    self.t = 0
@@ -87,6 +89,8 @@ class Joystick:
             self.B = c[1][1]
             self.X = c[1][3]
             self.Y = c[1][4]
+            self.LeftBumper = c[1][6]
+            self.RightBumper = c[1][7]
         
         
         self.t += dt
@@ -119,7 +123,7 @@ class Joystick:
                :param robot: Robot to command
                """
         t = f'{time.perf_counter():.3f}: '
-        self.stdout.write(str(self.LeftJoystickY))
+        #self.stdout.write(str(self.LeftJoystickY))
         # try:
         #     if c in "mvt":
         #         s = command[1:].replace("=", " ").strip(" \t=").split(" ")
@@ -189,13 +193,15 @@ class Joystick:
         #         robot.motors.connect()
         #     print(t + "Enable")
         #     robot.motors.enable()
+        elif self.LeftBumper:
+            robot.mode = 1
         else:
             robot.stop()
 
 
 class Terminal:
 
-    def __init__(self, terminal, buffer):
+    def __init__(self, listener, terminal, buffer):
         """
         Initialize terminal as user interface
         :param terminal: Curses window object
@@ -224,11 +230,12 @@ class Terminal:
         self.Y = 0
         self.B = 0
         self.heldB = True
-        #self.sub = subscr()
 
         self.deadZone = 0.1
 
-    def teleop(self, robot, dt, control):
+        self.listener = listener
+
+    def teleop(self, robot, dt):
         """
         Check for user input and command robot appropriately
         :param robot: Robot to command
@@ -236,11 +243,10 @@ class Terminal:
         """
         c = self.terminal.getch()
         
-        #cont = self.sub.get_data()
-        cont = control
+        cont = self.listener.get_data()
         #print(cont)
         
-        if cont!= None:
+        if cont != None:
             self.LeftJoystickX = cont[0][0]
             self.LeftJoystickY = cont[0][1]
             self.RightJoystickX = cont[0][2]
@@ -375,7 +381,7 @@ class Terminal:
         elif c == "p":  # quit
             robot.disable_steer()
             robot.stop()
-            sys.stdout = self.stdout
+            #sys.stdout = self.stdout
             self.quit = True
         elif c == " ":
             robot.stop()
