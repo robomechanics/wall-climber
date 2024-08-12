@@ -20,7 +20,7 @@ elevator_left_offset = -253
 elevator_right_offset = -406
 
 class Robot:
-    def __init__(self, motors, l=0.46, h=0.115, r=0.025): # default parameters are Sally's
+    def __init__(self, motors, l=0.46, h=0.115, r=0.025, M=50, mass=8.3): # default parameters are Sally's
         self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(5, 7))
         self.steer_motors = motors.add(steer_ids, 'XM430-W210-T',
                                        offset={steer_ids[i]: steer_offsets[i] for i in range(4)})
@@ -36,6 +36,8 @@ class Robot:
         self.l = l
         self.h = h
         self.r = r
+        self.M = M
+        self.mass = mass
 
         self.time = []
         self.torques = [[0 for i in range(10)] for j in range(10)]
@@ -60,6 +62,12 @@ class Robot:
     
     def get_r(self):
         return self.r
+    
+    def get_M(self):
+        return self.M
+    
+    def get_mass(self):
+        return self.mass
     
     def get_pitch(self):
         return sum(self.orientation[0]) / len(self.orientation[0])
