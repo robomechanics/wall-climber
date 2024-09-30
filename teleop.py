@@ -50,7 +50,9 @@ class Joystick:
         self.Y = 0
         self.B = 0
 
+
         self.deadZone = 0.1
+     
 
         sys.stdout = self.buffer = buffer
 
@@ -225,7 +227,9 @@ class Terminal:
         self.B = 0
         self.heldB = True
         self.sub = subscr()
-
+        # Fall 24 Silly Walks
+        self.silly = False
+        
         self.deadZone = 0.1
 
     def teleop(self, robot, dt):
@@ -377,6 +381,7 @@ class Terminal:
             sys.stdout = self.stdout
             self.quit = True
         elif c == " ":
+            self.silly = False
             robot.stop()
             print(t + "Stop")
         elif c == "w":
@@ -412,6 +417,9 @@ class Terminal:
         elif c == '1':
             robot.set_straight()
             print("Set Straight")
+        # For Fall 24 Silly Walk
+        elif c == 'y':
+            self.silly = True
         elif c == "r":
             if not robot.motors.opened:
                 print(t + "Reconnect")
@@ -454,8 +462,8 @@ class Terminal:
                         print(id, "GOING INTO VELOCITY MODE")
 
         # print(robot.motors.get(5).set_velocity)
-        else:
-            robot.stop()
+        # else:
+        #     robot.stop()
 
         if c == 'l':
             # robot.lift(1)

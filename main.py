@@ -24,9 +24,15 @@ def main_loop(terminal, buffer):
     t = time.perf_counter()     # current time in seconds
     t0 = t                      # start time for loop counter in seconds
     loops = 0                   # loop counter for timing code
+
+    silly_t = 0
+
     while not interface.quit:
 
         dt = time.perf_counter() - t
+
+        silly_t += dt
+        
         t += dt
         if dt > 1:  # Timeout
             continue
@@ -35,6 +41,21 @@ def main_loop(terminal, buffer):
         interface.display()
 
         robot.motors.read_angle()
+
+        # Fall 24 Silly Walks
+        if interface.silly == True:
+            if silly_t < 5:
+                robot.drive(1)
+            elif silly_t < 10:
+                robot.drive(-1)
+            elif silly_t < 15:
+                robot.turn(0.5)
+            else:
+                silly_t = 0
+        else: 
+            silly_t = 0
+
+        
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()
