@@ -1,0 +1,5 @@
+dynamixel_sdk
+numpy
+serial
+inputs
+curses

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from motors import Motors
-from robot import Robot
-from teleop import Terminal
+from wall_climber.motors import Motors
+from wall_climber.robot import Robot
+from wall_climber.teleop import Terminal
+from wall_climber.teleop import Joystick
 from serial import SerialException
-from teleop import Joystick
 import io
 import time
 import curses           # pip install windows-curses

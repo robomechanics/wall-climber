@@ -36,15 +36,15 @@
 ## Simple talker demo that listens to std_msgs/Strings published 
 ## to the 'chatter' topic
 
-import rospy
+import rclpy
 #from std_msgs.msg import String
 from sensor_msgs.msg import Joy
 
 class subscr:
     def __init__(self):
-        rospy.init_node('listener', anonymous=True)
+        rclpy.init_node('listener', anonymous=True)
         self.controls = ((0,0,0,0,0,0,0,0), (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
-        rospy.Subscriber('/joy', Joy, self.callback)
+        rclpy.Subscriber('/joy', Joy, self.callback)
         
     def callback(self, data):
         self.controls = (data.axes, data.buttons)

@@ -17,18 +17,18 @@ Parse user input to control the robot
 "p" = print log to output and exit
 """
 
+from wall_climber.controller import XboxController
+from wall_climber.listener import subscr
 import sys
 import time
-import controller
 import numpy as np
-from listener import subscr
 
 class Joystick:
 
     def __init__(self, terminal, buffer):
         self.terminal = terminal
         self.terminal.nodelay(True)
-        self.joystick = controller.XboxController()
+        self.joystick = XboxController()
         self.command = ""
         self.command_text = ""
         self.status = ["Loading", "", ""]
