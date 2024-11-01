@@ -5,6 +5,7 @@ Evaluate current robot state and modify setpoints using forward and inverse kine
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 # Wheel numbering
 FL = 1  # Front left
 FR = 2  # Front right
@@ -20,7 +21,7 @@ elevator_left_offset = -253
 elevator_right_offset = -406
 
 class Robot:
-    def __init__(self, motors, l=0.46, h=0.115, r=0.025, M=50, mass=8.3): # default parameters are Sally's
+    def __init__(self, motors, l=0.433, w= 0.317, h=0.064, r=0.025, M=50, mass=8.3): # default parameters are Sally's
         self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(5, 7))
         self.steer_motors = motors.add(steer_ids, 'XM430-W210-T',
                                        offset={steer_ids[i]: steer_offsets[i] for i in range(4)})
@@ -34,10 +35,13 @@ class Robot:
         self.motors = motors
 
         self.l = l
+        self.w = w
         self.h = h
         self.r = r
         self.M = M
+        
         self.mass = mass
+        self.acc = [0, 0, 0]
 
         self.time = []
         self.torques = [[0 for i in range(10)] for j in range(10)]
@@ -310,3 +314,122 @@ class Robot:
             axs[i, 1].plot(t, velocity, label = label_velocity)
         plt.legend()
         plt.show()
+    
+#######################################################################################
+# Some functions for force estimation
+    def get_steer_torques(self):
+        '''
+        From motors.py, read_torques. Values are averaged, in N*mm. See class Motor
+        For steering motors
+        '''
+        torque_steer = np.zeros(len(self.steer_motors))
+        for i, motor in enumerate(self.steer_motors): 
+            torque_steer[i] = motor.torque 
+        return torque_steer
+    
+    def get_drive_torques(self):
+        '''
+        From motors.py, read_torques. Values are averaged, in N*mm. See class Motor
+        For driving motors
+        '''
+        torque_drive = np.zeros(len(self.drive_motors))
+        for i, motor in enumerate(self.drive_motors): 
+            torque_drive[i] = motor.torque 
+        return torque_drive
+    
+    def get_steer_angles(self):
+
+        theta = np.zeros(len(self.steer_motors))
+        for i, motor in enumerate(self.steer_motors):
+            theta[i] = motor.angle
+        
+        return theta
+
+    def get_hand_Jacobian(self):
+
+        vector_r = np.array([[-self.r], [0], [0]])
+        vector_0 = np.zeros([3,1])
+        Jh = np.block([
+            [vector_r, vector_0, vector_0, vector_0],
+            [vector_0, vector_r, vector_0, vector_0],
+            [vector_0, vector_0, vector_r, vector_0],
+            [vector_0, vector_0, vector_0, vector_r]
+        ])
+        return Jh
+
+    def get_grasp_map(self):
+
+        steer_theta = self.get_steer_angles()
+
+        G_T = np.zeros((3*len(self.steer_motors),6))
+
+        r = np.array([[self.l/2, self.l/2, -self.l/2, -self.l/2],
+                      [self.w/2, -self.w/2, self.w/2, -self.w/2],
+                      [-self.h, -self.h, -self.h, -self.h]])
+
+        for i, theta in enumerate(steer_theta):
+            R = np.array([[np.cos(theta), np.sin(theta), 0],[-np.sin(theta), np.cos(theta), 0],[0,0,1]])
+            G_T[i*3:i*3+3, :] = np.hstack((R, -skew(r[:, i])))
+        # This returns G, Gt is transposed back to G
+        return G_T.transpose()
+    
+    def get_contact_forces(self):
+        """
+        Finding contact forces with Jb, G_T, u (actuator joint torques from motors 5 to 8), f_ext (external force, gravity in this case)
+        """
+        # Find u
+        u = np.zeros(len(self.drive_ids))
+        drive_torques = self.get_drive_torques()
+        print(f"fc: \n{self.drive_ids}")
+        for i, motor_id in enumerate(self.drive_ids):
+            u[i] = drive_torques[motor_id - 1]
+
+        "Need to adjust get_acceleration in listener.py"
+        # Find f_ext, extract IMU's acceleration data and mul. by m of robot
+        acc = imu_listener.get_acceleration()
+        f_ext = np.array([acc[0]*self.M, acc[1]*self.M, acc[2]*self.M, 0, 0, 0]).transpose()
+        
+        # Find N, using 0 as placeholder for simplified mass
+        N = np.zeros(len(self.drive_ids))
+
+        # b = [u-N; F_ext]
+        b = np.vstack((u - N,-f_ext))
+
+        # Find hand Jacobian and grasp map matrices
+        J = self.get_hand_Jacobian()
+        G = self.get_grasp_map()
+
+        # A = [-Jh';-G]
+        A = np.vstack((-J.transpose(), -G)) 
+        
+        # Contact force
+        fc = np.linalg.pinv(A) * b
+        return fc
+    
+    def update_imu(self, acc):
+        self.acc = acc
+
+def skew(vector):
+    # 6*1 velocity vector to 3*3 skew matrix
+    return np.array([[0, -vector[2], vector[1]], 
+                    [vector[2], 0, -vector[0]], 
+                    [-vector[1], vector[0], 0]])
+
+
+if __name__ == "__main__":
+    from motors import Motors
+    robot = Robot(Motors(),l = 10, w = 6, h = 1, r = 1) # Testing with fake param.
+    robot.steer_motors[0].angle = 0
+    robot.steer_motors[1].angle = 0
+    robot.steer_motors[2].angle = 0
+    robot.steer_motors[3].angle = 0
+
+    J = robot.get_hand_Jacobian()
+    G = robot.get_grasp_map()
+
+    print(f"J: \n{J}")
+    print(f"G: \n{G}")
+
+    robot.update_imu([0,0,-9.8])
+    fc = robot.get_contact_forces()
+    print(f"fc: \n{fc}")

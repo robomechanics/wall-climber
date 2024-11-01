@@ -45,6 +45,8 @@ def main_loop(terminal, buffer):
             interface.display()
 
         robot.motors.read_angle()
+        robot.motors.read_torque()
+        robot.update_imu(sub.get_accelerations())
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()

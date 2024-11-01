@@ -42,6 +42,8 @@ from sensor_msgs.msg import Joy, Imu
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+
+
 class subscr:
     def __init__(self):
         rospy.init_node('listener', anonymous=True)
@@ -50,6 +52,9 @@ class subscr:
         rospy.Subscriber('/joy', Joy, self.update_controls)
         rospy.Subscriber('/imu/data', Imu, self.update_imu)
         
+        # Global variable to store IMU acc. data
+        # IMU model: MicroStrain 3DM-CX5-AR
+        self.acceleration = None
     def update_controls(self, data):
         self.controls = (data.axes, data.buttons)
         #print(self.controls)
@@ -59,12 +64,25 @@ class subscr:
         q = Rotation.from_quat([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
         e = q.as_euler('xyz', True)
         self.orientation = [float(e[0]) % 360, float(e[1]) % 360, float(e[2]) % 360]
+        
+        """
+        Adding this line to obtain acceleration, ADJUST TO CORRECT DATA FORMAT
+        """
+        self.acceleration = [
+            data.linear_acceleration.x,
+            data.linear_acceleration.y,
+            data.linear_acceleration.z
+        ]
+
 
     def get_data(self):
         return self.controls
     
     def get_orientation(self):
         return self.orientation
+    
+    def get_acceleration(self):
+        return self.acceleration
 
 
 #def callback(data):
