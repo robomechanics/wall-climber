@@ -3,18 +3,15 @@
 from wall_climber.motors import Motors
 from wall_climber.robot import Robot
 from wall_climber.teleop import Terminal
-from wall_climber.teleop import Joystick
 from serial import SerialException
 import io
 import time
-import curses           # pip install windows-curses
+import curses
 import os
 
 
-def main_loop(terminal, buffer):
-    interface = Terminal(terminal, buffer)
-    #interface = Joystick(terminal, buffer)
-    print(os.name)
+def main_loop(terminal, buffer, ros):
+    interface = Terminal(terminal, buffer, ros)
     if os.name == 'nt':
         port = "COM5"          # Windows
     else:
@@ -59,14 +56,24 @@ def main_loop(terminal, buffer):
                     if motor.temperature > 70:
                         print(f"TEMPERATURE OVERRIDE: motor {motor.id} at {motor.temperature}°C")
 
+def main():
+    ros = False
+    try:
+        import rclpy
+        rclpy.init()
+        ros = True
+    except ModuleNotFoundError:
+        pass 
 
-if __name__ == "__main__":
     buf = io.StringIO()
     try:
-        curses.wrapper(lambda terminal: main_loop(terminal, buf))
+        curses.wrapper(lambda terminal: main_loop(terminal, buf, ros))
         os.system('cls' if os.name == 'nt' else 'clear')
         log = buf.getvalue()
         for s in log:
             print(s, end="")
     except SerialException:
         print("Disconnected")
+
+if __name__ == "__main__":
+    main()

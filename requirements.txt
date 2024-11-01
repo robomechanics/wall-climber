@@ -1,5 +1,4 @@
 dynamixel_sdk
 numpy
-serial
+pyserial
 inputs
-curses
