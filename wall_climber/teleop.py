@@ -19,183 +19,11 @@ Parse user input to control the robot
 
 import sys
 import time
-import controller
 import numpy as np
-from listener import subscr
-
-class Joystick:
-
-    def __init__(self, terminal, buffer):
-        self.terminal = terminal
-        self.terminal.nodelay(True)
-        self.joystick = controller.XboxController()
-        self.command = ""
-        self.command_text = ""
-        self.status = ["Loading", "", ""]
-        self.t = 0
-        self.quit = False
-        self.stdout = sys.stdout
-        self.i = 0
-
-        self.LeftJoystickY = 0
-        self.LeftJoystickX = 0
-        self.RightJoystickY = 0
-        self.RightJoystickX = 0
-        self.LeftTrigger = 0
-        self.RightTrigger = 0
-        self.LeftBumper = 0
-        self.RightBumper = 0
-        self.A = 0
-        self.X = 0
-        self.Y = 0
-        self.B = 0
-
-        self.deadZone = 0.1
-
-        sys.stdout = self.buffer = buffer
-
-    def teleop(self, robot, dt):
-        """
-        Check for user input and command robot appropriately
-        :param robot: Robot to command
-        :param dt: Time since last teleop update
-        """
-        # self.terminal.getch()
-        #c = self.joystick.read()
-        
-        sub = subscr()
-        
-        c = sub.get_data()
-
-        self.stdout.write(str(c) + "\n")
-        #if c != -1:
-        #    # c = chr(c)
-        #    self.t = 0
-        #    [self.LeftJoystickX, self.LeftJoystickY, self.RightJoystickX, self.RightJoystickY,
-        #     self.A, self.X, self.B, self.Y,
-        #     self.LeftBumper, self.RightBumper, self.LeftTrigger, self.RightTrigger] = c
-        
-        if c!= None:
-            self.LeftJoystickX = c[0][0]
-            self.LeftJoystickY = c[0][1]
-            self.RightJoystickX = c[0][2]
-            self.RightJoystickY = c[0][3]
-            self.RightTrigger = c[0][4]
-            self.LeftTrigger = c[0][5]
-        
-            self.A = c[1][0]
-            self.B = c[1][1]
-            self.X = c[1][3]
-            self.Y = c[1][4]
-        
-        
-        self.t += dt
-        self.execute(robot)
-
-    def display(self):
-        """
-        Update the user interface display
-        """
-        buffer = self.buffer.getvalue()
-        n = sum([1 if s else 0 for s in self.status])
-        self.terminal.erase()
-        y, x = self.terminal.getmaxyx()
-        lines = buffer[-10000:].split("\n")[-y + n:-1]
-        for i in range(y - 1 - n - len(lines)):
-            self.terminal.addstr("\n")
-        for line in lines:
-            self.terminal.addstr(line[:x - 1] + "\n")
-        for i in range(len(self.status)):
-            if self.status[i]:
-                self.terminal.addstr((self.status[i].replace("\n", " \\ ") + "\n")[:x - 1])
-        self.terminal.addstr(("> " + self.command_text)[:x - 1])
-        if self.i < len(buffer):
-            self.stdout.write(buffer[self.i:])
-            self.i = len(buffer)
-
-    def execute(self, robot):
-        """
-               Execute the given command
-               :param robot: Robot to command
-               """
-        t = f'{time.perf_counter():.3f}: '
-        self.stdout.write(str(self.LeftJoystickY))
-        # try:
-        #     if c in "mvt":
-        #         s = command[1:].replace("=", " ").strip(" \t=").split(" ")
-        #         id = int(s[0].strip(" \t="))
-        #         val = float(s[1].strip(" \t="))
-        #         if id not in robot.motors.motors_by_id:
-        #             return
-        #         if c == "m":
-        #             print(t + f"Setting motor {id} to angle {val} degrees")
-        #             robot.motors.motors_by_id[id].set_angle = val
-        #         elif c == "v":
-        #             print(t + f"Setting motor {id} to speed {val} degrees per second")
-        #             robot.motors.motors_by_id[id].set_velocity = val
-        #         elif c == "t":
-        #             print(t + f"Setting motor {id} to torque {val} Newton millimeters")
-        #             robot.motors.motors_by_id[id].set_torque = val
-        # except (ValueError, IndexError):
-        #     print(t + f"Invalid command: {command}")
-        #     pass
-        if False and self.B:  # B Button
-            robot.stop()
-            sys.stdout = self.stdout
-            self.quit = True
-        elif self.A and (np.abs(self.LeftJoystickY) > self.deadZone):
-            robot.hold_two_drive(self.LeftJoystickY)
-            print(t + "Hold Front and Drive" + str(self.LeftJoystickY))
-        elif self.A:  # A Button
-            robot.hold_two()
-            print(t + "Hold Two")
-        elif self.Y:
-            robot.hold_four()
-            print("Hold Four")
-        elif self.X:
-            robot.set_straight()
-            print("Set Straight")
-        elif np.abs(self.LeftJoystickY) > self.deadZone or np.abs(self.LeftJoystickX) > self.deadZone:  # X Button
-            robot.strafe_drive(self.LeftJoystickX, self.LeftJoystickY)
-            print(t + "Strafe-Drive " + str(self.LeftJoystickY))
-            print(robot.motors.get(7).torque_mode)
-        elif np.abs(self.LeftJoystickY) > self.deadZone > np.abs(self.LeftJoystickX):  # X Button
-            robot.drive(self.LeftJoystickY)
-            print(t + "Drive " + str(self.LeftJoystickY))
-        elif self.RightTrigger > 0:
-            robot.lift(1)
-            print(t + "Lift" + str(self.RightTrigger))
-        elif self.LeftTrigger > 0:
-            robot.lift(-1)
-            print(t + "Drop" + str(self.LeftTrigger))
-        # elif self.LeftJoystickY < -0.05:
-        #     robot.drive(0.4)
-        #     print(t + "Reverse")
-        # elif self.LeftJoystickX > 0.05:
-        #     robot.strafe(-0.4)
-        #     print(t + "Left")
-        # elif self.LeftJoystickX < -0.05:
-        #     robot.strafe(0.4)
-        #     print(t + "Right")
-        elif self.RightJoystickX < -0.05:
-            robot.turn(-0.4)
-            print(t + "CCW")
-        elif self.RightJoystickX > 0.05:
-            robot.turn(0.4)
-            print(t + "CW")
-        # elif c == "r":
-        #     if not robot.motors.opened:
-        #         print(t + "Reconnect")
-        #         robot.motors.connect()
-        #     print(t + "Enable")
-        #     robot.motors.enable()
-        else:
-            robot.stop()
-
 
 class Terminal:
 
-    def __init__(self, terminal, buffer):
+    def __init__(self, terminal, buffer, ros):
         """
         Initialize terminal as user interface
         :param terminal: Curses window object
@@ -224,9 +52,13 @@ class Terminal:
         self.Y = 0
         self.B = 0
         self.heldB = True
-        self.sub = subscr()
+        self.ros = ros
+        if self.ros:
+            from wall_climber.listener import Listener
+            self.sub = Listener()
 
         self.deadZone = 0.1
+        self.joystick = False
 
     def teleop(self, robot, dt):
         """
@@ -235,11 +67,12 @@ class Terminal:
         :param dt: Time since last teleop update
         """
         c = self.terminal.getch()
-        
-        cont = self.sub.get_data()
+        cont = None
+        if self.ros:
+            cont = self.sub.get_data()
         #print(cont)
-        
-        if cont!= None:
+        self.joystick = cont != None
+        if self.joystick:
             self.LeftJoystickX = cont[0][0]
             self.LeftJoystickY = cont[0][1]
             self.RightJoystickX = cont[0][2]
@@ -454,7 +287,7 @@ class Terminal:
                         print(id, "GOING INTO VELOCITY MODE")
 
         # print(robot.motors.get(5).set_velocity)
-        else:
+        elif self.joystick:
             robot.stop()
 
         if c == 'l':

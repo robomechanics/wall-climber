@@ -290,8 +290,8 @@ class Motors:
                 sync.txRxPacket()
                 for motor in motor_list:
                     raw = sync.getData(motor.id, *PRESENT_VELOCITY_XM)
-                    if raw >= 32768:
-                        raw -= 32768 * 2
+                    if raw >= 2147483648:
+                        raw -= 2147483648 * 2
                     motor.velocity = raw * 0.229 * 6 * motor.mirror
             else:
                 print("read_velocity not implemented yet for " + series + "series")
