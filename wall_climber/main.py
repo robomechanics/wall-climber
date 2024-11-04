@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 
-from motors import Motors
-from robot import Robot
-from teleop import Terminal, Joystick
+from wall_climber.motors import Motors
+from wall_climber.robot import Robot
+from wall_climber.teleop import Terminal
+from wall_climber.listener import Listener
+import wall_climber.transition as transition
 from serial import SerialException
-from listener import subscr
-import transition
+import rclpy
 import io
 import time
-import curses           # pip install windows-curses
+import curses
 import os
 
+
 def main_loop(terminal, buffer):
-    print(os.name)
     if os.name == 'nt':
         port = "COM5"          # Windows
     else:
         port = "/dev/ttyUSB0"   # Linux
 
-    sub = subscr()
     robot = Robot(Motors(port=port, baud=57600))
-    interface = Terminal(sub, terminal, buffer)
-    #interface = Joystick(sub, terminal, buffer)
+    sub = Listener()
+    interface = Terminal(terminal, buffer, sub)
 
     t = time.perf_counter()     # current time in seconds
     t0 = t                      # start time for loop counter in seconds
@@ -71,14 +71,18 @@ def main_loop(terminal, buffer):
                     if motor.temperature > 70:
                         print(f"TEMPERATURE OVERRIDE: motor {motor.id} at {motor.temperature}°C")
 
+def main():
+    rclpy.init()
 
-if __name__ == "__main__":
     buf = io.StringIO()
     try:
         curses.wrapper(lambda terminal: main_loop(terminal, buf))
         os.system('cls' if os.name == 'nt' else 'clear')
         log = buf.getvalue()
-        #for s in log:
-            #print(s, end="")
+        for s in log:
+            print(s, end="")
     except SerialException:
         print("Disconnected")
+
+if __name__ == "__main__":
+    main()
