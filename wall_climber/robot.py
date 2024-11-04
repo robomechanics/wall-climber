@@ -15,7 +15,7 @@ RR = 4  # Rear right
 drive_ids = (5, 6, 7, 8)
 steer_ids = (1, 2, 3, 4)
 lift_ids = (9, 10)
-steer_offsets = (0, -20, 0, 0)
+steer_offsets = (0, -20, 45, 0)
 
 elevator_left_offset = -253
 elevator_right_offset = -406
@@ -279,10 +279,8 @@ class Robot:
         self.lift_motors[0].set_angle = 194.8 + elevator_left_offset + 100
         self.lift_motors[1].set_angle = 156.4 + elevator_right_offset + 100
 
-    def update_state(self):
+    def update_state(self, orientation):
         motor_ids = range(1, 11)
-        self.motors.read_torque(ids=motor_ids)
-        self.motors.read_velocity(ids=motor_ids)
         for id in motor_ids:
             self.torques[id-1].pop()
             self.torques[id-1].insert(0, self.motors.get(id).torque)
@@ -290,7 +288,7 @@ class Robot:
             self.velocities[id-1].insert(0, self.motors.get(id).velocity)
         for i in range(len(self.orientation)):
             self.orientation[i].pop()
-            self.orientation.insert(0, self.listener.get_orientation()[i])
+            self.orientation[i].insert(0, orientation[i])
         #print("Pitch (deg): {0:.3f}".format(self.orientation[0]))
 
     def get_motor_info(self):

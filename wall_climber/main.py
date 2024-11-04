@@ -34,8 +34,6 @@ def main_loop(terminal, buffer):
         if dt > 1:  # Timeout
             continue
 
-        robot.update_state()
-
         if robot.mode == 0:
             interface.teleop(robot, dt)
         elif robot.mode == 1:
@@ -44,12 +42,15 @@ def main_loop(terminal, buffer):
         if type(interface) == Terminal:
             interface.display()
 
+        robot.motors.read_velocity()
         robot.motors.read_angle()
         robot.motors.read_torque()
-        robot.update_imu(sub.get_accelerations())
+        robot.update_imu(sub.get_acceleration())
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()
+
+        robot.update_state(sub.get_orientation())
 
         loops += 1
         if t - t0 > 0.25:

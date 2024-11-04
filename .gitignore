@@ -1,3 +1,4 @@
 .idea/
 __pycache__/
 chemistry.csv
+.DS_Store
