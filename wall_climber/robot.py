@@ -289,7 +289,7 @@ class Robot:
         for i in range(len(self.orientation)):
             self.orientation[i].pop()
             self.orientation[i].insert(0, orientation[i])
-        #print("Pitch (deg): {0:.3f}".format(self.orientation[0]))
+        print("Pitch (deg): {0:.3f}".format(self.orientation[0]))
 
     def get_motor_info(self):
         motor_ids = range(1, 11)

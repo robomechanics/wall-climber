@@ -1,16 +1,32 @@
 <launch>
-
-    <node pkg="joy" type="joy_node" name="joy_node" respawn="true">
-        <param name="dev" value="/dev/input/js0" />
+    <node 
+        pkg="joy" 
+        exec="joy_node" 
+        name="joy_node" 
+        respawn="true">
+        <param 
+            name="dev" 
+            value="/dev/input/js0"/>
     </node>
 
-    <node name="main" type="main.py" pkg="wall-climber" output="screen"/>
+    <node 
+        name="main" 
+        exec="main.py" 
+        pkg="wall-climber" 
+        output="screen"/>
 
     <!-- Launch the Microstrain node so the IMU starts publishing data -->
-    <node name="microstrain_intertial_driver" pkg="microstrain_inertial_driver" type="microstrain_inertial_driver_node" output="screen" ns="/">
+    <node 
+        name="microstrain_intertial_driver" 
+        exec = "microstrain_inertial_driver_node" 
+        pkg="microstrain_inertial_driver" 
+        type="microstrain_inertial_driver_node"
+        output="screen" 
+        namespace="/">
 
         <!-- Load the default params file. -->
-        <rosparam file="$(find microstrain_inertial_driver)/microstrain_inertial_driver_common/config/params.yml" command="load" />
+        <param from="$(find microstrain_inertial_driver)/microstrain_inertial_driver_common/config/params.yml"/>
     </node>
 
 </launch>
+<!-- $(find ) may not work, need to test-->
