@@ -11,8 +11,8 @@
 
     <node 
         name="main" 
-        exec="main.py" 
-        pkg="wall-climber" 
+        exec="main" 
+        pkg="wall_climber" 
         output="screen"/>
 
     <!-- Launch the Microstrain node so the IMU starts publishing data -->
@@ -20,12 +20,11 @@
         name="microstrain_intertial_driver" 
         exec = "microstrain_inertial_driver_node" 
         pkg="microstrain_inertial_driver" 
-        type="microstrain_inertial_driver_node"
         output="screen" 
         namespace="/">
 
         <!-- Load the default params file. -->
-        <param from="$(find microstrain_inertial_driver)/microstrain_inertial_driver_common/config/params.yml"/>
+        <param from="$(find-pkg-share wall_climber)/config/microstrain_inertial_params.yml"/>
     </node>
 
 </launch>
