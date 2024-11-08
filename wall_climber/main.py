@@ -3,24 +3,30 @@
 from wall_climber.motors import Motors
 from wall_climber.robot import Robot
 from wall_climber.teleop import Terminal
+from wall_climber.listener import Listener
+import wall_climber.transition as transition
 from serial import SerialException
+import rclpy
 import io
 import time
 import curses
 import os
 
 
-def main_loop(terminal, buffer, ros):
-    interface = Terminal(terminal, buffer, ros)
+def main_loop(terminal, buffer):
     if os.name == 'nt':
         port = "COM5"          # Windows
     else:
         port = "/dev/ttyUSB0"   # Linux
+
     robot = Robot(Motors(port=port, baud=57600))
+    sub = Listener()
+    interface = Terminal(terminal, buffer, sub)
 
     t = time.perf_counter()     # current time in seconds
     t0 = t                      # start time for loop counter in seconds
     loops = 0                   # loop counter for timing code
+
     while not interface.quit:
 
         dt = time.perf_counter() - t
@@ -28,13 +34,24 @@ def main_loop(terminal, buffer, ros):
         if dt > 1:  # Timeout
             continue
 
-        interface.teleop(robot, dt)
-        interface.display()
+        if robot.mode == 0:
+            interface.teleop(robot, dt)
+        elif robot.mode == 1:
+            transition.loop(robot)
+        
+        if type(interface) == Terminal:
+            interface.display()
 
+        robot.motors.read_velocity()
         robot.motors.read_angle()
+        robot.motors.read_torque()
+        robot.update_imu(sub.get_acceleration())
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()
+
+        robot.update_state(sub.get_orientation())
+        robot.get_contact_forces()
 
         loops += 1
         if t - t0 > 0.25:
@@ -57,17 +74,11 @@ def main_loop(terminal, buffer, ros):
                         print(f"TEMPERATURE OVERRIDE: motor {motor.id} at {motor.temperature}°C")
 
 def main():
-    ros = False
-    try:
-        import rclpy
-        rclpy.init()
-        ros = True
-    except ModuleNotFoundError:
-        pass 
+    rclpy.init()
 
     buf = io.StringIO()
     try:
-        curses.wrapper(lambda terminal: main_loop(terminal, buf, ros))
+        curses.wrapper(lambda terminal: main_loop(terminal, buf))
         os.system('cls' if os.name == 'nt' else 'clear')
         log = buf.getvalue()
         for s in log:

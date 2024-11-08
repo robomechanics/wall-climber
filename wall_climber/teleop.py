@@ -23,7 +23,7 @@ import numpy as np
 
 class Terminal:
 
-    def __init__(self, terminal, buffer, ros):
+    def __init__(self, terminal, buffer, sub):
         """
         Initialize terminal as user interface
         :param terminal: Curses window object
@@ -38,6 +38,7 @@ class Terminal:
         self.stdout = sys.stdout
         self.i = 0
         sys.stdout = self.buffer = buffer
+        self.sub = sub
         
         self.LeftJoystickY = 0
         self.LeftJoystickX = 0
@@ -52,10 +53,6 @@ class Terminal:
         self.Y = 0
         self.B = 0
         self.heldB = True
-        self.ros = ros
-        if self.ros:
-            from wall_climber.listener import Listener
-            self.sub = Listener()
 
         self.deadZone = 0.1
         self.joystick = False
@@ -67,9 +64,8 @@ class Terminal:
         :param dt: Time since last teleop update
         """
         c = self.terminal.getch()
-        cont = None
-        if self.ros:
-            cont = self.sub.get_data()
+
+        cont = self.sub.get_data()
         #print(cont)
         self.joystick = cont != None
         if self.joystick:
@@ -207,7 +203,7 @@ class Terminal:
         elif c == "p":  # quit
             robot.disable_steer()
             robot.stop()
-            sys.stdout = self.stdout
+            #sys.stdout = self.stdout
             self.quit = True
         elif c == " ":
             robot.stop()
