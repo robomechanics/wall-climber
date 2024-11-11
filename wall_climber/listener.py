@@ -10,7 +10,7 @@ class Listener(Node):
         self.orientation = [0, 0, 0]
         self.acceleration = [0, 0, 0]
         self.subscription_joy = self.create_subscription(Joy, 'joy', self.update_controls, 10)
-        self.subscription_imu = self.create_subscription(Imu, 'imu/data', self.update_imu, 10)
+        self.subscription_imu = self.create_subscription(Imu, '/imu/data', self.update_imu, 10)
 
     def update_controls(self, data):
         self.controls = (data.axes, data.buttons)
@@ -26,13 +26,15 @@ class Listener(Node):
         self.orientation = [float(e[0]) % 360, float(e[1]) % 360, float(e[2]) % 360]
         
         """
-        Adding this line to obtain acceleration, ADJUST TO CORRECT DATA FORMAT
+        Adding this line to obtain acceleration
         """
-        self.acceleration = -[
-            data.linear_acceleration.x,
-            data.linear_acceleration.y,
-            data.linear_acceleration.z
+        
+        self.acceleration = [
+            -data.linear_acceleration.x,
+            -data.linear_acceleration.y,
+            -data.linear_acceleration.z
         ]
+
     def get_orientation(self):
         return self.orientation
 

@@ -45,12 +45,15 @@ def main_loop(terminal, buffer):
         robot.motors.read_velocity()
         robot.motors.read_angle()
         robot.motors.read_torque()
-        robot.update_imu(sub.get_acceleration())
+   
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()
 
+        rclpy.spin_once(sub)
+
         robot.update_state(sub.get_orientation())
+        robot.update_imu(sub.get_acceleration())
         robot.get_contact_forces()
 
         loops += 1

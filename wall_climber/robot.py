@@ -315,6 +315,10 @@ class Robot:
     
 #######################################################################################
 # Some functions for force estimation
+    def update_imu(self, acc):
+        self.acc = acc
+        #print(f"Acc from update_imu: \n{acc[0]:.3f}, {acc[1]:.3f}, {acc[2]:.3f}")
+        
     def get_steer_torques(self):
         '''
         From motors.py, read_torques. Values are averaged, in N*mm. See class Motor
@@ -383,13 +387,13 @@ class Robot:
 
         "Need to adjust get_acceleration in listener.py"
         # Find f_ext, extract IMU's acceleration data and mul. by m of robot
-        f_ext = np.array([self.acc[0]*self.M, self.acc[1]*self.M, self.acc[2]*self.M, 0, 0, 0])
+        f_ext = np.array([self.acc[0]*self.mass, self.acc[1]*self.mass, self.acc[2]*self.mass, 0, 0, 0])
         
         # Find N, using 0 as placeholder for simplified mass
         N = np.zeros(len(self.drive_ids))
 
         # b = [u-N; F_ext]
-        b = np.hstack((u - N,-f_ext))
+        b = np.hstack((u - N, -f_ext))
 
         # Find hand Jacobian and grasp map matrices
         J = self.get_hand_Jacobian()
@@ -399,12 +403,13 @@ class Robot:
         A = np.vstack((-J.transpose(), -G)) 
         
         # Contact force
-        fc = np.linalg.pinv(A) @ b
+        fc = np.linalg.lstsq(A, b)
+        #fc = np.linalg.pinv(A) @ b
+        print(f'Acc: \n{self.acc[2]}')
         print(f'Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n')
         return fc
     
-    def update_imu(self, acc):
-        self.acc = acc
+
 
 def skew(vector):
     # 6*1 velocity vector to 3*3 skew matrix
@@ -415,7 +420,7 @@ def skew(vector):
 
 if __name__ == "__main__":
     from motors import Motors
-    robot = Robot(Motors(),l = 10, w = 6, h = 1, r = 1) # Testing with fake param.
+    robot = Robot(Motors()) # Testing with fake param.
     robot.steer_motors[0].angle = 0
     robot.steer_motors[1].angle = 0
     robot.steer_motors[2].angle = 0

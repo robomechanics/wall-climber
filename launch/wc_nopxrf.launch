@@ -8,7 +8,7 @@
             name="dev" 
             value="/dev/input/js0"/>
     </node>
-
+    
     <node 
         name="main" 
         exec="main" 
@@ -16,7 +16,7 @@
         output="screen"/>
 
     <!-- Launch the Microstrain node so the IMU starts publishing data -->
-    <!-- <node 
+    <node 
         name="microstrain_inertial_driver" 
         exec = "microstrain_inertial_driver_node" 
         pkg="microstrain_inertial_driver"
@@ -24,6 +24,6 @@
         namespace="/">
 
         <param from="$(find-pkg-share wall_climber)/config/microstrain_inertial_params.yml"/>
-    </node> -->
+    </node>
 
 </launch>
