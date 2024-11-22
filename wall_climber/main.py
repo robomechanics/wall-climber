@@ -82,12 +82,14 @@ def main():
     buf = io.StringIO()
     try:
         curses.wrapper(lambda terminal: main_loop(terminal, buf))
+        
+    except SerialException:
+        print("Disconnected")
+    finally: 
         os.system('cls' if os.name == 'nt' else 'clear')
         log = buf.getvalue()
         for s in log:
             print(s, end="")
-    except SerialException:
-        print("Disconnected")
 
 if __name__ == "__main__":
     main()
