@@ -50,7 +50,7 @@ def main_loop(terminal, buffer):
         robot.motors.write_velocity()
         robot.motors.write_torque()
 
-        rclpy.spin_once(sub)
+        rclpy.spin_once(sub, timeout_sec = 0)
 
         robot.update_state(sub.get_orientation())
         robot.update_imu(sub.get_acceleration())
@@ -82,9 +82,10 @@ def main():
     buf = io.StringIO()
     try:
         curses.wrapper(lambda terminal: main_loop(terminal, buf))
-        
+
     except SerialException:
         print("Disconnected")
+
     finally: 
         os.system('cls' if os.name == 'nt' else 'clear')
         log = buf.getvalue()
