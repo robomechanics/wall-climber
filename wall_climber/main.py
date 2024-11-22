@@ -3,7 +3,7 @@
 from wall_climber.motors import Motors
 from wall_climber.robot import Robot
 from wall_climber.teleop import Terminal
-from wall_climber.listener import Listener
+from wall_climber.listener import sally_node
 import wall_climber.transition as transition
 from serial import SerialException
 import rclpy
@@ -20,7 +20,7 @@ def main_loop(terminal, buffer):
         port = "/dev/ttyUSB0"   # Linux
 
     robot = Robot(Motors(port=port, baud=57600))
-    sub = Listener()
+    sub = sally_node()
     interface = Terminal(terminal, buffer, sub)
 
     t = time.perf_counter()     # current time in seconds
@@ -54,7 +54,7 @@ def main_loop(terminal, buffer):
 
         robot.update_state(sub.get_orientation())
         robot.update_imu(sub.get_acceleration())
-        robot.get_contact_forces()
+        contact_forces = robot.get_contact_forces()
 
         loops += 1
         if t - t0 > 0.25:

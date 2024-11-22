@@ -2,16 +2,18 @@ from rclpy.node import Node
 #from std_msgs.msg import String
 from sensor_msgs.msg import Joy, Imu
 from scipy.spatial.transform import Rotation
+from std_msgs.msg import Float32MultiArray
 
-class Listener(Node):
+class sally_node(Node):
     def __init__(self):
-        super().__init__('listener')
+        super().__init__('sally_node')
         self.controls = None
         self.orientation = [0, 0, 0]
         self.acceleration = [0, 0, 0]
         self.subscription_joy = self.create_subscription(Joy, 'joy', self.update_controls, 10)
         self.subscription_imu = self.create_subscription(Imu, '/imu/data', self.update_imu, 10)
 
+        
     def update_controls(self, data):
         self.controls = (data.axes, data.buttons)
         #print(self.controls)
@@ -40,3 +42,7 @@ class Listener(Node):
 
     def get_acceleration(self):
         return self.acceleration
+    
+    # For publisher
+    def publish_wheel_1(self, contact_forces):
+        return ()
