@@ -12,6 +12,7 @@ class sally_node(Node):
         self.controls = None
         self.orientation = [0, 0, 0]
         self.acceleration = [0, 0, 0]
+ 
         self.subscription_joy = self.create_subscription(Joy, 'joy', self.update_controls, 10)
         self.subscription_imu = self.create_subscription(Imu, '/imu/data', self.update_imu, 10)
 
@@ -19,6 +20,7 @@ class sally_node(Node):
         self.publisher_2 = self.create_publisher(WrenchStamped, 'contact_force_2', 10)
         self.publisher_3 = self.create_publisher(WrenchStamped, 'contact_force_3', 10)
         self.publisher_4 = self.create_publisher(WrenchStamped, 'contact_force_4', 10)
+
     def update_controls(self, data):
         self.controls = (data.axes, data.buttons)
         #print(self.controls)

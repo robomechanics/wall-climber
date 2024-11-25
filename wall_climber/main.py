@@ -56,7 +56,7 @@ def main_loop(terminal, buffer):
         robot.update_imu(sub.get_acceleration())
         contact_forces = robot.get_contact_forces()
         # For URDF force estimation
-        sally_node.publish_contact_forces(contact_forces)
+        sub.publish_contact_forces(contact_forces)
 
         loops += 1
         if t - t0 > 0.25:
