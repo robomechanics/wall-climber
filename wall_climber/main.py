@@ -3,7 +3,7 @@
 from wall_climber.motors import Motors
 from wall_climber.robot import Robot
 from wall_climber.teleop import Terminal
-from wall_climber.listener import Listener
+from wall_climber.listener import sally_node
 import wall_climber.transition as transition
 from serial import SerialException
 import rclpy
@@ -20,7 +20,7 @@ def main_loop(terminal, buffer):
         port = "/dev/ttyUSB0"   # Linux
 
     robot = Robot(Motors(port=port, baud=57600))
-    sub = Listener()
+    sub = sally_node()
     interface = Terminal(terminal, buffer, sub)
 
     t = time.perf_counter()     # current time in seconds
@@ -45,12 +45,18 @@ def main_loop(terminal, buffer):
         robot.motors.read_velocity()
         robot.motors.read_angle()
         robot.motors.read_torque()
-        robot.update_imu(sub.get_acceleration())
+   
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()
 
+        rclpy.spin_once(sub, timeout_sec = 0)
+
         robot.update_state(sub.get_orientation())
+        robot.update_imu(sub.get_acceleration())
+        contact_forces = robot.get_contact_forces()
+        # For URDF force estimation
+        sub.publish_contact_forces(contact_forces)
 
         loops += 1
         if t - t0 > 0.25:
@@ -78,12 +84,15 @@ def main():
     buf = io.StringIO()
     try:
         curses.wrapper(lambda terminal: main_loop(terminal, buf))
+
+    except SerialException:
+        print("Disconnected")
+
+    finally: 
         os.system('cls' if os.name == 'nt' else 'clear')
         log = buf.getvalue()
         for s in log:
             print(s, end="")
-    except SerialException:
-        print("Disconnected")
 
 if __name__ == "__main__":
     main()

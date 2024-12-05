@@ -429,7 +429,9 @@ microstrain_inertial_driver:
     #   gyro_* will affect data in /imu/data_raw if enabled
     #   mag_* will affect data in /imu/mag if enabled
     #   pressure_* will affect data in /imu/pressure if enabled
-    low_pass_filter_config : True
+
+    # For ROS2, changing this to false in order to run the node
+    low_pass_filter_config : False
 
     accel_low_pass_filter_enable    : False
     accel_low_pass_filter_auto      : False

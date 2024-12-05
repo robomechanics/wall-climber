@@ -284,6 +284,7 @@ class Terminal:
 
         # print(robot.motors.get(5).set_velocity)
         elif self.joystick:
+            print("STOP!")
             robot.stop()
 
         if c == 'l':

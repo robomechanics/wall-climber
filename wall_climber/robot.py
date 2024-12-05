@@ -289,7 +289,7 @@ class Robot:
         for i in range(len(self.orientation)):
             self.orientation[i].pop()
             self.orientation[i].insert(0, orientation[i])
-        print("Pitch (deg): {0:.3f}".format(self.orientation[0]))
+        print(f"Orientation: {orientation[0]:.3f}, {orientation[1]:.3f}, {orientation[2]:.3f}")
 
     def get_motor_info(self):
         motor_ids = range(1, 11)
@@ -315,6 +315,10 @@ class Robot:
     
 #######################################################################################
 # Some functions for force estimation
+    def update_imu(self, acc):
+        self.acc = acc
+        #print(f"Acc from update_imu: \n{acc[0]:.3f}, {acc[1]:.3f}, {acc[2]:.3f}")
+        
     def get_steer_torques(self):
         '''
         From motors.py, read_torques. Values are averaged, in N*mm. See class Motor
@@ -378,20 +382,18 @@ class Robot:
         # Find u
         u = np.zeros(len(self.drive_ids))
         drive_torques = self.get_drive_torques()
-        print(f"fc: \n{self.drive_ids}")
-        for i, motor_id in enumerate(self.drive_ids):
-            u[i] = drive_torques[motor_id - 1]
+        for i in range(len(self.drive_ids)):
+            u[i] = drive_torques[i] / 1000
 
         "Need to adjust get_acceleration in listener.py"
         # Find f_ext, extract IMU's acceleration data and mul. by m of robot
-        acc = imu_listener.get_acceleration()
-        f_ext = np.array([acc[0]*self.M, acc[1]*self.M, acc[2]*self.M, 0, 0, 0]).transpose()
+        f_ext = np.array([self.acc[0]*self.mass, self.acc[1]*self.mass, self.acc[2]*self.mass, 0, 0, 0])
         
         # Find N, using 0 as placeholder for simplified mass
         N = np.zeros(len(self.drive_ids))
 
         # b = [u-N; F_ext]
-        b = np.vstack((u - N,-f_ext))
+        b = np.hstack((u - N, -f_ext))
 
         # Find hand Jacobian and grasp map matrices
         J = self.get_hand_Jacobian()
@@ -401,11 +403,13 @@ class Robot:
         A = np.vstack((-J.transpose(), -G)) 
         
         # Contact force
-        fc = np.linalg.pinv(A) * b
+        fc = np.linalg.lstsq(A, b)
+        #fc = np.linalg.pinv(A) @ b
+        print(f'Acc: \n{self.acc[2]}')
+        print(f'Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n')
         return fc
     
-    def update_imu(self, acc):
-        self.acc = acc
+
 
 def skew(vector):
     # 6*1 velocity vector to 3*3 skew matrix
