@@ -403,7 +403,7 @@ class Robot:
         A = np.vstack((-J.transpose(), -G)) 
         
         # Contact force
-        fc = np.linalg.lstsq(A, b)
+        fc = np.linalg.lstsq(A, b, rcond=None)[0]
         #fc = np.linalg.pinv(A) @ b
         print(f'Acc: \n{self.acc[2]}')
         print(f'Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n')

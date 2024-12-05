@@ -73,6 +73,7 @@ class sally_node(Node):
         Args:
             contact_forces (list or array): A list or array of 12 float values representing contact forces.
         """
+        
         msg = WrenchStamped()
         msg.header.frame_id = frame_id  # Frame ID for the corresponding contact point
 
@@ -83,7 +84,7 @@ class sally_node(Node):
         msg.wrench.torque.x = 0.0  # Assuming no torques for now
         msg.wrench.torque.y = 0.0
         msg.wrench.torque.z = 0.0
-
         # Publish
-        publisher.publish(msg)
+        #publisher.publish(msg)
         #self.get_logger().info(f"Published {frame_id} contact force: {msg.wrench.force}")
+        
