@@ -21,6 +21,7 @@ import sys
 import time
 import numpy as np
 
+
 class Terminal:
 
     def __init__(self, terminal, buffer, sub):
@@ -39,7 +40,7 @@ class Terminal:
         self.i = 0
         sys.stdout = self.buffer = buffer
         self.sub = sub
-        
+
         self.LeftJoystickY = 0
         self.LeftJoystickX = 0
         self.RightJoystickY = 0
@@ -66,7 +67,7 @@ class Terminal:
         c = self.terminal.getch()
 
         cont = self.sub.get_data()
-        #print(cont)
+        # print(cont)
         self.joystick = cont != None
         if self.joystick:
             self.LeftJoystickX = cont[0][0]
@@ -82,9 +83,9 @@ class Terminal:
             self.Y = cont[1][4]
             self.LeftBumper = cont[1][6]
             self.RightBumper = cont[1][7]
-            
-        #print(self.B)
-        
+
+        # print(self.B)
+
         if c != -1:
             c = chr(c)
             self.t = 0
@@ -116,17 +117,19 @@ class Terminal:
         n = sum([1 if s else 0 for s in self.status])
         self.terminal.erase()
         y, x = self.terminal.getmaxyx()
-        lines = buffer[-10000:].split("\n")[-y + n:-1]
+        lines = buffer[-10000:].split("\n")[-y + n : -1]
         for i in range(y - 1 - n - len(lines)):
             self.terminal.addstr("\n")
         for line in lines:
-            self.terminal.addstr(line[:x - 1] + "\n")
+            self.terminal.addstr(line[: x - 1] + "\n")
         for i in range(len(self.status)):
             if self.status[i]:
-                self.terminal.addstr((self.status[i].replace("\n", " \\ ") + "\n")[:x - 1])
-        self.terminal.addstr(("> " + self.command_text)[:x - 1])
+                self.terminal.addstr(
+                    (self.status[i].replace("\n", " \\ ") + "\n")[: x - 1]
+                )
+        self.terminal.addstr(("> " + self.command_text)[: x - 1])
         if self.i < len(buffer):
-            self.stdout.write(buffer[self.i:])
+            self.stdout.write(buffer[self.i :])
             self.i = len(buffer)
 
     def execute(self, command, robot):
@@ -137,8 +140,7 @@ class Terminal:
         """
         c = command[0]
 
-        
-        t = f'{time.perf_counter():.3f}: '
+        t = f"{time.perf_counter():.3f}: "
         try:
             if c in "mvt":
                 s = command[1:].replace("=", " ").strip(" \t=").split(" ")
@@ -158,7 +160,7 @@ class Terminal:
         except (ValueError, IndexError):
             print(t + f"Invalid command: {command}")
             pass
-        
+
         # print(self.LeftTrigger, self.RightTrigger)
         if c == "+":
             pass
@@ -180,19 +182,24 @@ class Terminal:
             robot.drive(-1 * 0.6)
             print(t + "Drive Straight" + str(self.LeftJoystickY))
         elif self.LeftJoystickY > self.deadZone and self.X and self.A:  # X Button
-            robot.hold_two_drive(-1*0.6)
+            robot.hold_two_drive(-1 * 0.6)
             print(t + "Drive Straight" + str(self.LeftJoystickY))
-        elif self.LeftJoystickY < -1*self.deadZone and self.X:  # X Button
+        elif self.LeftJoystickY < -1 * self.deadZone and self.X:  # X Button
             robot.drive(1)
             print(t + "Drive Straight" + str(self.LeftJoystickY))
         elif self.X:
             robot.set_straight()
             print("Set Straight")
-        elif np.abs(self.LeftJoystickY) > self.deadZone or np.abs(self.LeftJoystickX) > self.deadZone:  # X Button
-            robot.strafe_drive(self.LeftJoystickX, -1*self.LeftJoystickY)
+        elif (
+            np.abs(self.LeftJoystickY) > self.deadZone
+            or np.abs(self.LeftJoystickX) > self.deadZone
+        ):  # X Button
+            robot.strafe_drive(self.LeftJoystickX, -1 * self.LeftJoystickY)
             print(t + "Strafe-Drive " + str(self.LeftJoystickY))
-        elif np.abs(self.LeftJoystickY) > self.deadZone > np.abs(self.LeftJoystickX):  # X Button
-            robot.drive(-1*self.LeftJoystickY)
+        elif (
+            np.abs(self.LeftJoystickY) > self.deadZone > np.abs(self.LeftJoystickX)
+        ):  # X Button
+            robot.drive(-1 * self.LeftJoystickY)
             print(t + "Drive " + str(self.LeftJoystickY))
         elif self.RightJoystickX < -0.05:
             robot.turn(0.4)
@@ -203,7 +210,7 @@ class Terminal:
         elif c == "p":  # quit
             robot.disable_steer()
             robot.stop()
-            #sys.stdout = self.stdout
+            # sys.stdout = self.stdout
             self.quit = True
         elif c == " ":
             robot.stop()
@@ -226,19 +233,19 @@ class Terminal:
         elif c == "q":
             robot.turn(-0.4)
             print(t + "CW")
-        elif c == 'f':
+        elif c == "f":
             robot.hold_two_drive(0.5)
             print(t + "Hold Front and Drive Forward")
-        elif c == 'b':
+        elif c == "b":
             robot.hold_two_drive(-0.5)
             print(t + "Hold Front and Drive Backward")
-        elif c == '2':  # A Button
+        elif c == "2":  # A Button
             robot.hold_two()
             print(t + "Hold Two")
-        elif c == '4':
+        elif c == "4":
             robot.hold_four()
             print("Hold Four")
-        elif c == '1':
+        elif c == "1":
             robot.set_straight()
             print("Set Straight")
         elif c == "r":
@@ -247,18 +254,22 @@ class Terminal:
                 robot.motors.connect()
             print(t + "Enable")
             robot.motors.enable()
-        elif c == 'j':
+        elif c == "j":
             for i, id in enumerate(robot.drive_ids):
                 if robot.motors.get(id).torque_mode:
-                    robot.motors.enable(robot.drive_ids, velocity_mode=True, torque_mode=False)
+                    robot.motors.enable(
+                        robot.drive_ids, velocity_mode=True, torque_mode=False
+                    )
                     for i, id in enumerate(robot.drive_ids):
                         robot.motors.get(id).goal_torque = 200
                         robot.motors.get(id).set_torque = 200
                         print(id, "GOING INTO VELOCITY MODE")
-        elif c == 'k':
+        elif c == "k":
             for i, id in enumerate(robot.drive_ids):
                 if robot.motors.get(id).velocity_mode:
-                    robot.motors.enable(robot.drive_ids, velocity_mode=False, torque_mode=True)
+                    robot.motors.enable(
+                        robot.drive_ids, velocity_mode=False, torque_mode=True
+                    )
                     for i, id in enumerate(robot.drive_ids):
                         robot.motors.get(id).goal_torque = 0
                         robot.motors.get(id).set_torque = 0
@@ -267,7 +278,9 @@ class Terminal:
             self.heldB = True
             for i, id in enumerate(robot.drive_ids):
                 if robot.motors.get(id).velocity_mode:
-                    robot.motors.enable(robot.drive_ids, velocity_mode=False, torque_mode=True)
+                    robot.motors.enable(
+                        robot.drive_ids, velocity_mode=False, torque_mode=True
+                    )
                     for i, id in enumerate(robot.drive_ids):
                         robot.motors.get(id).goal_torque = 0
                         robot.motors.get(id).set_torque = 0
@@ -276,7 +289,9 @@ class Terminal:
             self.heldB = False
             for i, id in enumerate(robot.drive_ids):
                 if robot.motors.get(id).torque_mode:
-                    robot.motors.enable(robot.drive_ids, velocity_mode=True, torque_mode=False)
+                    robot.motors.enable(
+                        robot.drive_ids, velocity_mode=True, torque_mode=False
+                    )
                     for i, id in enumerate(robot.drive_ids):
                         robot.motors.get(id).goal_torque = 200
                         robot.motors.get(id).set_torque = 200
@@ -287,11 +302,11 @@ class Terminal:
             print("STOP!")
             robot.stop()
 
-        if c == 'l':
+        if c == "l":
             # robot.lift(1)
             robot.raise_elevator()
             print(t + "Elevator up")
-        elif c == ';':
+        elif c == ";":
             # robot.lift(-1)
             print(t + "Elevator zero")
             robot.zero_elevator()

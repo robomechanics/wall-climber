@@ -1,5 +1,6 @@
 from rclpy.node import Node
-#from std_msgs.msg import String
+
+# from std_msgs.msg import String
 from sensor_msgs.msg import Joy, Imu
 from geometry_msgs.msg import WrenchStamped
 from scipy.spatial.transform import Rotation
@@ -8,40 +9,51 @@ from std_msgs.msg import Float32MultiArray
 
 class sally_node(Node):
     def __init__(self):
-        super().__init__('sally_node')
+        super().__init__("sally_node")
         self.controls = None
         self.orientation = [0, 0, 0]
         self.acceleration = [0, 0, 0]
- 
-        self.subscription_joy = self.create_subscription(Joy, 'joy', self.update_controls, 10)
-        self.subscription_imu = self.create_subscription(Imu, '/imu/data', self.update_imu, 10)
 
-        self.publisher_1 = self.create_publisher(WrenchStamped, 'contact_force_1', 10)
-        self.publisher_2 = self.create_publisher(WrenchStamped, 'contact_force_2', 10)
-        self.publisher_3 = self.create_publisher(WrenchStamped, 'contact_force_3', 10)
-        self.publisher_4 = self.create_publisher(WrenchStamped, 'contact_force_4', 10)
+        self.subscription_joy = self.create_subscription(
+            Joy, "joy", self.update_controls, 10
+        )
+        self.subscription_imu = self.create_subscription(
+            Imu, "/imu/data", self.update_imu, 10
+        )
+
+        self.publisher_1 = self.create_publisher(WrenchStamped, "contact_force_1", 10)
+        self.publisher_2 = self.create_publisher(WrenchStamped, "contact_force_2", 10)
+        self.publisher_3 = self.create_publisher(WrenchStamped, "contact_force_3", 10)
+        self.publisher_4 = self.create_publisher(WrenchStamped, "contact_force_4", 10)
 
     def update_controls(self, data):
         self.controls = (data.axes, data.buttons)
-        #print(self.controls)
+        # print(self.controls)
 
     def get_data(self):
         return self.controls
-    
+
     def update_imu(self, data):
-        #q = np.ndarray(data.orientation.w, data.orientation.x, data.orientation.y, data.orientation.z)
-        q = Rotation.from_quat([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
-        e = q.as_euler('xyz', True)
+        # q = np.ndarray(data.orientation.w, data.orientation.x, data.orientation.y, data.orientation.z)
+        q = Rotation.from_quat(
+            [
+                data.orientation.x,
+                data.orientation.y,
+                data.orientation.z,
+                data.orientation.w,
+            ]
+        )
+        e = q.as_euler("xyz", True)
         self.orientation = [float(e[0]) % 360, float(e[1]) % 360, float(e[2]) % 360]
-        
+
         """
         Adding this line to obtain acceleration
         """
-        
+
         self.acceleration = [
             -data.linear_acceleration.x,
             -data.linear_acceleration.y,
-            -data.linear_acceleration.z
+            -data.linear_acceleration.z,
         ]
 
     def get_orientation(self):
@@ -49,7 +61,7 @@ class sally_node(Node):
 
     def get_acceleration(self):
         return self.acceleration
-    
+
     # For publisher
     def publish_contact_forces(self, contact_forces):
         # Split the 1x12 forces of each wheel into four 1x3 segments
@@ -73,7 +85,7 @@ class sally_node(Node):
         Args:
             contact_forces (list or array): A list or array of 12 float values representing contact forces.
         """
-        
+
         msg = WrenchStamped()
         msg.header.frame_id = frame_id  # Frame ID for the corresponding contact point
 
@@ -85,6 +97,5 @@ class sally_node(Node):
         msg.wrench.torque.y = 0.0
         msg.wrench.torque.z = 0.0
         # Publish
-        #publisher.publish(msg)
-        #self.get_logger().info(f"Published {frame_id} contact force: {msg.wrench.force}")
-        
+        # publisher.publish(msg)
+        # self.get_logger().info(f"Published {frame_id} contact force: {msg.wrench.force}")

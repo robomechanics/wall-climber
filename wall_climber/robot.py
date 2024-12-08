@@ -20,12 +20,18 @@ steer_offsets = (0, -20, 45, 0)
 elevator_left_offset = -253
 elevator_right_offset = -406
 
+
 class Robot:
-    def __init__(self, motors, l=0.433, w= 0.317, h=0.064, r=0.025, M=50, mass=8.3): # default parameters are Sally's
-        self.drive_motors = motors.add(drive_ids, 'XM430-W210-T', mirror=(5, 7))
-        self.steer_motors = motors.add(steer_ids, 'XM430-W210-T',
-                                       offset={steer_ids[i]: steer_offsets[i] for i in range(4)})
-        self.lift_motors = motors.add(lift_ids, 'XM430-W210-T', mirror=(9,))
+    def __init__(
+        self, motors, l=0.433, w=0.317, h=0.064, r=0.025, M=50, mass=8.3
+    ):  # default parameters are Sally's
+        self.drive_motors = motors.add(drive_ids, "XM430-W210-T", mirror=(5, 7))
+        self.steer_motors = motors.add(
+            steer_ids,
+            "XM430-W210-T",
+            offset={steer_ids[i]: steer_offsets[i] for i in range(4)},
+        )
+        self.lift_motors = motors.add(lift_ids, "XM430-W210-T", mirror=(9,))
 
         motors.enable(drive_ids, torque_mode=True)
         motors.enable(steer_ids, velocity_mode=False)
@@ -39,7 +45,7 @@ class Robot:
         self.h = h
         self.r = r
         self.M = M
-        
+
         self.mass = mass
         self.acc = [0, 0, 0]
 
@@ -60,19 +66,19 @@ class Robot:
 
     def get_l(self):
         return self.l
-    
+
     def get_h(self):
         return self.h
-    
+
     def get_r(self):
         return self.r
-    
+
     def get_M(self):
         return self.M
-    
+
     def get_mass(self):
         return self.mass
-    
+
     def get_pitch(self):
         return sum(self.orientation[0]) / len(self.orientation[0])
 
@@ -183,15 +189,15 @@ class Robot:
             self.motors.get(id).set_torque = 0
 
     def strafe_drive(self, x, y):
-        v = np.sqrt(x ** 2 + y ** 2)
+        v = np.sqrt(x**2 + y**2)
         angle = np.degrees(np.arctan2(x, y))
         if abs(angle) > 135:
             angle -= 180 * np.sign(angle)
             v *= -1
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = angle
-        
-        #for i, id in enumerate(drive_ids):
+
+        # for i, id in enumerate(drive_ids):
         #    self.motors.get(id).set_velocity = v * self.motors.get(id).speed
         if self.motors.get(7).torque_mode:
             print("torque mode strafe drive")
@@ -205,6 +211,7 @@ class Robot:
     def print_lift(self):
         for i, id in enumerate(lift_ids):
             print(id + self.motors.get(id).angle)
+
     def turn_torque(self, v):
         """
         Turn CW/CCW
@@ -212,7 +219,9 @@ class Robot:
         """
         drive_dirs = (-1, 1, -1, 1)
         for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_torque = drive_dirs[i] * v * self.motors.get(id).stall / 1
+            self.motors.get(id).set_torque = (
+                drive_dirs[i] * v * self.motors.get(id).stall / 1
+            )
         steer_dirs = (1, -1, -1, 1)
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = steer_dirs[i] * 60
@@ -224,7 +233,9 @@ class Robot:
         """
         drive_dirs = (-1, 1, -1, 1)
         for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_velocity = drive_dirs[i] * v * self.motors.get(id).speed
+            self.motors.get(id).set_velocity = (
+                drive_dirs[i] * v * self.motors.get(id).speed
+            )
         steer_dirs = (1, -1, -1, 1)
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = steer_dirs[i] * 60
@@ -250,7 +261,7 @@ class Robot:
     def set_torque_mode(self, id):
         self.motors.get(id).torque_mode = True
         self.motors.get(id).velocity_mode = False
-    
+
     def set_velocity_mode(self, id):
         self.motors.get(id).torque_mode = False
         self.motors.get(id).velocity_mode = True
@@ -262,10 +273,10 @@ class Robot:
         self.motors.get(id).set_velocity = v
 
     def get_motor_velocity(self, id):
-        return self.velocities[id-1][-1]
-    
+        return self.velocities[id - 1][-1]
+
     def get_motor_torque(self, id):
-        return self.torques[id-1][-1]
+        return self.torques[id - 1][-1]
 
     def zero_elevator(self):
         self.lift_motors[0].set_angle = 13.4 + elevator_left_offset + 100
@@ -282,113 +293,136 @@ class Robot:
     def update_state(self, orientation):
         motor_ids = range(1, 11)
         for id in motor_ids:
-            self.torques[id-1].pop()
-            self.torques[id-1].insert(0, self.motors.get(id).torque)
-            self.velocities[id-1].pop()
-            self.velocities[id-1].insert(0, self.motors.get(id).velocity)
+            self.torques[id - 1].pop()
+            self.torques[id - 1].insert(0, self.motors.get(id).torque)
+            self.velocities[id - 1].pop()
+            self.velocities[id - 1].insert(0, self.motors.get(id).velocity)
         for i in range(len(self.orientation)):
             self.orientation[i].pop()
             self.orientation[i].insert(0, orientation[i])
-        print(f"Orientation: {orientation[0]:.3f}, {orientation[1]:.3f}, {orientation[2]:.3f}")
+        print(
+            f"Orientation: {orientation[0]:.3f}, {orientation[1]:.3f}, {orientation[2]:.3f}"
+        )
 
     def get_motor_info(self):
         motor_ids = range(1, 11)
         self.motors.read_torque(ids=motor_ids)
         self.motors.read_velocity(ids=motor_ids)
         for id in motor_ids:
-            self.torques[id-1].append(self.motors.get(id).torque)
-            self.velocities[id-1].append(self.motors.get(id).velocity)
+            self.torques[id - 1].append(self.motors.get(id).torque)
+            self.velocities[id - 1].append(self.motors.get(id).velocity)
 
     def plot_torque_vel(self):
         fig, axs = plt.subplots(10, 2)
-        fig.suptitle('Vertically stacked subplots')
+        fig.suptitle("Vertically stacked subplots")
         for i in range(10):
             t = self.time
             torque = self.torques[i]
             velocity = self.velocities[i]
             label_torque = "Motor " + str(i) + " torque"
             label_velocity = "Motor " + str(i) + " velocity"
-            axs[i, 0].plot(t, torque, label = label_torque)
-            axs[i, 1].plot(t, velocity, label = label_velocity)
+            axs[i, 0].plot(t, torque, label=label_torque)
+            axs[i, 1].plot(t, velocity, label=label_velocity)
         plt.legend()
         plt.show()
-    
-#######################################################################################
-# Some functions for force estimation
+
+    #######################################################################################
+    # Some functions for force estimation
     def update_imu(self, acc):
         self.acc = acc
-        #print(f"Acc from update_imu: \n{acc[0]:.3f}, {acc[1]:.3f}, {acc[2]:.3f}")
-        
+        # print(f"Acc from update_imu: \n{acc[0]:.3f}, {acc[1]:.3f}, {acc[2]:.3f}")
+
     def get_steer_torques(self):
-        '''
+        """
         From motors.py, read_torques. Values are averaged, in N*mm. See class Motor
         For steering motors
-        '''
+        """
         torque_steer = np.zeros(len(self.steer_motors))
-        for i, motor in enumerate(self.steer_motors): 
-            torque_steer[i] = motor.torque 
+        for i, motor in enumerate(self.steer_motors):
+            torque_steer[i] = motor.torque
         return torque_steer
-    
+
     def get_drive_torques(self):
-        '''
+        """
         From motors.py, read_torques. Values are averaged, in N*mm. See class Motor
         For driving motors
-        '''
+        """
         torque_drive = np.zeros(len(self.drive_motors))
-        for i, motor in enumerate(self.drive_motors): 
-            torque_drive[i] = motor.torque 
+        for i, motor in enumerate(self.drive_motors):
+            torque_drive[i] = motor.torque
         return torque_drive
-    
+
     def get_steer_angles(self):
 
         theta = np.zeros(len(self.steer_motors))
         for i, motor in enumerate(self.steer_motors):
             theta[i] = motor.angle
-        
+
         return theta
 
     def get_hand_Jacobian(self):
 
         vector_r = np.array([[-self.r], [0], [0]])
-        vector_0 = np.zeros([3,1])
-        Jh = np.block([
-            [vector_r, vector_0, vector_0, vector_0],
-            [vector_0, vector_r, vector_0, vector_0],
-            [vector_0, vector_0, vector_r, vector_0],
-            [vector_0, vector_0, vector_0, vector_r]
-        ])
+        vector_0 = np.zeros([3, 1])
+        Jh = np.block(
+            [
+                [vector_r, vector_0, vector_0, vector_0],
+                [vector_0, vector_r, vector_0, vector_0],
+                [vector_0, vector_0, vector_r, vector_0],
+                [vector_0, vector_0, vector_0, vector_r],
+            ]
+        )
         return Jh
 
     def get_grasp_map(self):
 
         steer_theta = self.get_steer_angles()
 
-        G_T = np.zeros((3*len(self.steer_motors),6))
+        G_T = np.zeros((3 * len(self.steer_motors), 6))
 
-        r = np.array([[self.l/2, self.l/2, -self.l/2, -self.l/2],
-                      [self.w/2, -self.w/2, self.w/2, -self.w/2],
-                      [-self.h, -self.h, -self.h, -self.h]])
+        r = np.array(
+            [
+                [self.l / 2, self.l / 2, -self.l / 2, -self.l / 2],
+                [self.w / 2, -self.w / 2, self.w / 2, -self.w / 2],
+                [-self.h, -self.h, -self.h, -self.h],
+            ]
+        )
 
         for i, theta in enumerate(steer_theta):
-            R = np.array([[np.cos(theta), np.sin(theta), 0],[-np.sin(theta), np.cos(theta), 0],[0,0,1]])
-            G_T[i*3:i*3+3, :] = np.hstack((R, -skew(r[:, i])))
+            R = np.array(
+                [
+                    [np.cos(theta), np.sin(theta), 0],
+                    [-np.sin(theta), np.cos(theta), 0],
+                    [0, 0, 1],
+                ]
+            )
+            G_T[i * 3 : i * 3 + 3, :] = np.hstack((R, -skew(r[:, i])))
         # This returns G, Gt is transposed back to G
         return G_T.transpose()
-    
+
     def get_contact_forces(self):
         """
-        Finding contact forces with Jb, G_T, u (actuator joint torques from motors 5 to 8), f_ext (external force, gravity in this case)
+        Finding contact forces with Jb, G_T, u (actuator joint torques from motors 5 to 8), 
+        f_ext (external force, gravity in this case)
         """
         # Find u
         u = np.zeros(len(self.drive_ids))
         drive_torques = self.get_drive_torques()
         for i in range(len(self.drive_ids)):
             u[i] = drive_torques[i] / 1000
-
-        "Need to adjust get_acceleration in listener.py"
-        # Find f_ext, extract IMU's acceleration data and mul. by m of robot
-        f_ext = np.array([self.acc[0]*self.mass, self.acc[1]*self.mass, self.acc[2]*self.mass, 0, 0, 0])
         
+        # Find f_ext, extract IMU's acceleration data and mul. by m of robot
+        f_ext = np.array(
+            [
+                self.acc[0] * self.mass,
+                self.acc[1] * self.mass,
+                self.acc[2] * self.mass,
+                0,
+                0,
+                0,
+            ]
+        )
+
         # Find N, using 0 as placeholder for simplified mass
         N = np.zeros(len(self.drive_ids))
 
@@ -400,27 +434,31 @@ class Robot:
         G = self.get_grasp_map()
 
         # A = [-Jh';-G]
-        A = np.vstack((-J.transpose(), -G)) 
-        
+        A = np.vstack((-J.transpose(), -G))
+
         # Contact force
         fc = np.linalg.lstsq(A, b, rcond=None)[0]
-        #fc = np.linalg.pinv(A) @ b
-        print(f'Acc: \n{self.acc[2]}')
-        print(f'Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n')
+        # fc = np.linalg.pinv(A) @ b
+        print(f"Acc: \n{self.acc[2]}")
+        print(f"Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n")
         return fc
-    
 
 
 def skew(vector):
     # 6*1 velocity vector to 3*3 skew matrix
-    return np.array([[0, -vector[2], vector[1]], 
-                    [vector[2], 0, -vector[0]], 
-                    [-vector[1], vector[0], 0]])
+    return np.array(
+        [
+            [0, -vector[2], vector[1]],
+            [vector[2], 0, -vector[0]],
+            [-vector[1], vector[0], 0],
+        ]
+    )
 
 
 if __name__ == "__main__":
     from motors import Motors
-    robot = Robot(Motors(),l = 10, w = 6, h = 1, r = 1) # Testing with fake param.
+
+    robot = Robot(Motors(), l=10, w=6, h=1, r=1)  # Testing with fake param.
     robot.steer_motors[0].angle = 0
     robot.steer_motors[1].angle = 0
     robot.steer_motors[2].angle = 0
@@ -432,6 +470,6 @@ if __name__ == "__main__":
     print(f"J: \n{J}")
     print(f"G: \n{G}")
 
-    robot.update_imu([0,0,-9.8])
+    robot.update_imu([0, 0, -9.8])
     fc = robot.get_contact_forces()
     print(f"fc: \n{fc}")
