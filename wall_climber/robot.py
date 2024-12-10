@@ -391,8 +391,8 @@ class Robot:
         for i, theta in enumerate(steer_theta):
             R = np.array(
                 [
-                    [np.cos(theta), np.sin(theta), 0],
-                    [-np.sin(theta), np.cos(theta), 0],
+                    [np.cos(theta), -np.sin(theta), 0],
+                    [np.sin(theta), np.cos(theta), 0],
                     [0, 0, 1],
                 ]
             )
@@ -434,11 +434,16 @@ class Robot:
         G = self.get_grasp_map()
 
         # A = [-Jh';-G]
-        A = np.vstack((-J.transpose(), -G))
+        A = np.vstack((J.transpose(), G))
 
         # Contact force
         # fc = np.linalg.lstsq(A, b, rcond=None)[0]
-        fc = np.linalg.pinv(A) @ b
+
+        # Using regularization to penalize sensor noise
+        lambda_reg = 0.0001
+        A_reg = A.T @ A + np.eye(A.shape[1]) * lambda_reg
+        b_reg = A.T @ b
+        fc = np.linalg.lstsq(A_reg, b_reg, rcond=None)[0]
         # print(f"Acc: \n{self.acc[2]}")
         # print(f"Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n")
         print(A)

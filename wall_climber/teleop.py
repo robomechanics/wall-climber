@@ -15,6 +15,9 @@ Parse user input to control the robot
 
 "r" = reconnect/re-enable motors
 "p" = print log to output and exit
+
+"j" = torque mode
+"k" = velocity mode
 """
 
 import sys
