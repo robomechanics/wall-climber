@@ -57,6 +57,7 @@ def main_loop(terminal, buffer):
         contact_forces = robot.get_contact_forces()
         # For URDF force estimation
         sub.publish_contact_forces(contact_forces)
+        sub.publish_joint_state(robot.motors.get())
 
         loops += 1
         if t - t0 > 0.25:

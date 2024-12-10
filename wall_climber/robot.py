@@ -402,7 +402,7 @@ class Robot:
 
     def get_contact_forces(self):
         """
-        Finding contact forces with Jb, G_T, u (actuator joint torques from motors 5 to 8), 
+        Finding contact forces with Jb, G_T, u (actuator joint torques from motors 5 to 8),
         f_ext (external force, gravity in this case)
         """
         # Find u
@@ -410,7 +410,7 @@ class Robot:
         drive_torques = self.get_drive_torques()
         for i in range(len(self.drive_ids)):
             u[i] = drive_torques[i] / 1000
-        
+
         # Find f_ext, extract IMU's acceleration data and mul. by m of robot
         f_ext = np.array(
             [
@@ -437,10 +437,13 @@ class Robot:
         A = np.vstack((-J.transpose(), -G))
 
         # Contact force
-        fc = np.linalg.lstsq(A, b, rcond=None)[0]
-        # fc = np.linalg.pinv(A) @ b
-        print(f"Acc: \n{self.acc[2]}")
-        print(f"Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n")
+        # fc = np.linalg.lstsq(A, b, rcond=None)[0]
+        fc = np.linalg.pinv(A) @ b
+        # print(f"Acc: \n{self.acc[2]}")
+        # print(f"Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n")
+        print(A)
+        print(b)
+        print(fc)
         return fc
 
 

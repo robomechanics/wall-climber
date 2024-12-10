@@ -4,21 +4,39 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import (
+    LaunchConfiguration,
+    Command,
+    PathJoinSubstitution,
+)
 from ament_index_python import get_package_share_directory
+
+urdf_pkg = FindPackageShare("sally_description")
+urdf_path = LaunchConfiguration("urdf_path")
+
+robot_description = ParameterValue(
+    Command(["xacro ", urdf_path, " ", LaunchConfiguration("xacro_args")]),
+    value_type=str,
+)
 
 
 def generate_launch_description():
-    urdf_path = LaunchConfiguration("urdfpath")
-
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                "urdfpath",
+                "urdf_path",
                 default_value=os.path.join(
                     get_package_share_directory("sally_description"),
                     "urdf/sally.urdf.xacro",
                 ),
-                description="Path to the URDF file",
+                description="Robot description file",
+            ),
+            DeclareLaunchArgument(
+                "xacro_args",
+                default_value="",
+                description="Xacro arguments (e.g. 'param:=value')",
             ),
             Node(
                 package="joy",
@@ -48,7 +66,7 @@ def generate_launch_description():
                 package="microstrain_inertial_driver",
                 executable="microstrain_inertial_driver_node",
                 name="microstrain_inertial_driver",
-                output="screen",
+                output="log",
                 parameters=[
                     os.path.join(
                         get_package_share_directory("wall_climber"),
@@ -67,7 +85,7 @@ def generate_launch_description():
                 executable="robot_state_publisher",
                 name="robot_state_publisher",
                 output="screen",
-                parameters=[{"robot_description": Command(["xacro ", urdf_path])}],
+                parameters=[{"robot_description": robot_description}],
             ),
         ]
     )
