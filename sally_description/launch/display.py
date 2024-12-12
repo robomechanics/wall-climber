@@ -32,25 +32,22 @@ rviz_path = PathJoinSubstitution([pkg, "rviz", LaunchConfiguration("rviz")])
 # Generate URDF from XACRO
 description = ParameterValue(
     Command(["xacro ", urdf_path, " ", LaunchConfiguration("xacro_args")]),
-    value_type=str)
+    value_type=str,
+)
 
 
 def generate_launch_description():
     # Declare launch arguments
     urdf_arg = DeclareLaunchArgument(
-        "urdf",
-        default_value=DEFAULT_URDF,
-        description="Robot description file"
+        "urdf", default_value=DEFAULT_URDF, description="Robot description file"
     )
     rviz_arg = DeclareLaunchArgument(
-        "rviz",
-        default_value=DEFAULT_RVIZ,
-        description="Rviz configuration file"
+        "rviz", default_value=DEFAULT_RVIZ, description="Rviz configuration file"
     )
     xacro_args_arg = DeclareLaunchArgument(
         "xacro_args",
         default_value=DEFAULT_XACRO_ARGS,
-        description="Xacro arguments (e.g. 'param:=value')"
+        description="Xacro arguments (e.g. 'param:=value')",
     )
 
     # Declare ROS nodes
@@ -59,30 +56,31 @@ def generate_launch_description():
         executable="robot_state_publisher",
         name="robot_state_publisher",
         output="screen",
-        parameters=[{"robot_description": description}]
+        parameters=[{"robot_description": description}],
     )
     joint_state_publisher = Node(
-        package='joint_state_publisher_gui',
-        executable='joint_state_publisher_gui',
-        name='joint_state_publisher_gui',
-        output='screen'
+        package="joint_state_publisher_gui",
+        executable="joint_state_publisher_gui",
+        name="joint_state_publisher_gui",
+        output="screen",
     )
     rviz2 = Node(
         package="rviz2",
         executable="rviz2",
         name="rviz2",
         arguments=["-d", rviz_path],
-        output="screen"
+        output="screen",
     )
 
-    return LaunchDescription([
-        # Launch arguments
-        urdf_arg,
-        rviz_arg,
-        xacro_args_arg,
-
-        # ROS nodes
-        robot_state_publisher,
-        joint_state_publisher,
-        rviz2
-    ])
+    return LaunchDescription(
+        [
+            # Launch arguments
+            urdf_arg,
+            rviz_arg,
+            xacro_args_arg,
+            # ROS nodes
+            robot_state_publisher,
+            joint_state_publisher,
+            rviz2,
+        ]
+    )
