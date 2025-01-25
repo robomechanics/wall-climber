@@ -4,7 +4,7 @@ Evaluate current robot state and modify setpoints using forward and inverse kine
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+from qpsolvers import solve_qp
 
 # Wheel numbering
 FL = 1  # Front left
@@ -20,6 +20,10 @@ steer_offsets = (0, -20, 45, 0)
 elevator_left_offset = -253
 elevator_right_offset = -406
 
+lamb = 1e-6
+# Lower and upper bounds of torque for optimization
+lb = 0
+ub = 10
 
 class Robot:
     def __init__(
@@ -54,6 +58,10 @@ class Robot:
         self.velocities = [[0 for i in range(10)] for j in range(10)]
         self.orientation = [[0 for i in range(10)] for j in range(3)]
 
+        # For optimization
+        self.lamb = lamb
+        self.lb = lb
+        self.ub = ub
         # 0 is teleop, 1 is transition
         self.mode = 0
 
@@ -450,7 +458,70 @@ class Robot:
         print(b)
         print(fc)
         return fc
+    
+    def get_optimized_forces(self):
+        # Find u
+        u = np.zeros(len(self.drive_ids))
+        drive_torques = self.get_drive_torques()
+        for i in range(len(self.drive_ids)):
+            u[i] = drive_torques[i] / 1000
 
+        # Find f_ext (external forces), in this case assume gravity only
+        f_ext = np.array([
+            self.acc[0] * self.mass,
+            self.acc[1] * self.mass,
+            self.acc[2] * self.mass,
+            0, 0, 0  # Assuming no ext. torques
+        ])
+
+        # Find N (assume zero)
+        N = np.zeros(len(self.drive_ids))
+
+        # Find hand Jacobian and grasp map
+        J = self.get_hand_Jacobian()
+        G = self.get_grasp_map()
+
+        # Regularization matrix H
+        num_forces = J.shape[0]  # Number of contact force variables
+        num_vars = num_forces + 1  # Including the adhesion margin 'c'
+
+        H = self.lamb * np.eye(num_vars)
+
+        # Linear cost vector f to max c
+        f = np.zeros(num_vars)
+        f[-1] = -1  # last term is -1 to maximize c
+
+        # Equality constraints: Aeq x = beq
+        A_eq = np.hstack((G, np.zeros((G.shape[0], 1))))  # Add zero column for 'c'
+        b_eq = -f_ext  # Static equilibrium constraints
+
+        # Inequality constraints: A x <= b
+        A_adhesion = np.hstack((J.T, np.ones((J.shape[1], 1))))  # Adhesion constraints
+        b_adhesion = np.zeros(J.shape[1])  # Adjust based on adhesion limits
+
+        A_tor_lower = np.hstack((-J.T, np.zeros((J.T.shape[0], 1))))
+        b_tor_lower = self.lb - N  # Torque lower bounds
+
+        A_tor_upper = np.hstack((J.T, np.zeros((J.T.shape[0], 1))))
+        b_tor_upper = self.ub - u  # Torque upper bounds
+
+        # Stack A and b with adhesion in priority
+        A = np.vstack((A_adhesion, A_tor_lower, A_tor_upper))
+        b = np.hstack((b_adhesion, b_tor_lower, b_tor_upper))
+
+        # Formatting for qp solvers
+        lb = np.full(num_vars, -np.inf)
+        ub = np.full(num_vars, np.inf)
+        lb[:num_forces] = self.lb
+        ub[:num_forces] = self.ub
+        lb[-1] = 0
+
+        # qp solver to find maximum
+        x = solve_qp(H, f, A, b, A_eq, b_eq, lb, ub, solver="quadprog")
+
+        f_opt = x[:-1] # optimized forces
+        c = x[-1] # adhesion margin
+        return f_opt, c
 
 def skew(vector):
     # 6*1 velocity vector to 3*3 skew matrix
