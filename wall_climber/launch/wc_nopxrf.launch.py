@@ -15,6 +15,7 @@ from ament_index_python import get_package_share_directory
 
 urdf_pkg = FindPackageShare("sally_description")
 urdf_path = LaunchConfiguration("urdf_path")
+rviz_path = LaunchConfiguration("rviz_path")
 
 robot_description = ParameterValue(
     Command(["xacro ", urdf_path, " ", LaunchConfiguration("xacro_args")]),
@@ -37,6 +38,14 @@ def generate_launch_description():
                 "xacro_args",
                 default_value="",
                 description="Xacro arguments (e.g. 'param:=value')",
+            ),
+            DeclareLaunchArgument(
+                "rviz_path",
+                default_value=os.path.join(
+                    get_package_share_directory("wall_climber"),
+                    "rviz/sally.rviz",
+                ),
+                description="Rviz configuration",
             ),
             Node(
                 package="joy",
@@ -79,6 +88,7 @@ def generate_launch_description():
                 executable="rviz2",
                 name="rviz2",
                 output="screen",
+                arguments=["-d", rviz_path]
             ),
             Node(
                 package="robot_state_publisher",

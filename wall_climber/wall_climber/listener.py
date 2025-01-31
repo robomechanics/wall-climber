@@ -22,10 +22,14 @@ class sally_node(Node):
             Imu, "/imu/data", self.update_imu, 10
         )
 
-        self.publisher_1 = self.create_publisher(WrenchStamped, "contact_force_1", 10)
-        self.publisher_2 = self.create_publisher(WrenchStamped, "contact_force_2", 10)
-        self.publisher_3 = self.create_publisher(WrenchStamped, "contact_force_3", 10)
-        self.publisher_4 = self.create_publisher(WrenchStamped, "contact_force_4", 10)
+        self.force_pub_1 = self.create_publisher(WrenchStamped, "contact_force_1", 10)
+        self.force_pub_2 = self.create_publisher(WrenchStamped, "contact_force_2", 10)
+        self.force_pub_3 = self.create_publisher(WrenchStamped, "contact_force_3", 10)
+        self.force_pub_4 = self.create_publisher(WrenchStamped, "contact_force_4", 10)
+        self.opt_force_pub_1 = self.create_publisher(WrenchStamped, "optimized_force_1", 10)
+        self.opt_force_pub_2 = self.create_publisher(WrenchStamped, "optimized_force_2", 10)
+        self.opt_force_pub_3 = self.create_publisher(WrenchStamped, "optimized_force_3", 10)
+        self.opt_force_pub_4 = self.create_publisher(WrenchStamped, "optimized_force_4", 10)
         self.pub_joint_state = self.create_publisher(JointState, "joint_states", 10)
 
     def update_controls(self, data):
@@ -72,10 +76,21 @@ class sally_node(Node):
         forces_3 = contact_forces[6:9]
         forces_4 = contact_forces[9:12]
 
-        self._publish_force(self.publisher_1, forces_1, "left_contact_1")
-        self._publish_force(self.publisher_2, forces_2, "right_contact_2")
-        self._publish_force(self.publisher_3, forces_3, "left_contact_3")
-        self._publish_force(self.publisher_4, forces_4, "right_contact_4")
+        self._publish_force(self.force_pub_1, forces_1, "left_contact_1")
+        self._publish_force(self.force_pub_2, forces_2, "right_contact_2")
+        self._publish_force(self.force_pub_3, forces_3, "left_contact_3")
+        self._publish_force(self.force_pub_4, forces_4, "right_contact_4")
+
+    def publish_optimized_forces(self, optimized_forces):
+        forces_1 = optimized_forces[0:3]
+        forces_2 = optimized_forces[3:6]
+        forces_3 = optimized_forces[6:9]
+        forces_4 = optimized_forces[9:12]
+
+        self._publish_force(self.opt_force_pub_1, forces_1, "left_contact_1")
+        self._publish_force(self.opt_force_pub_2, forces_2, "right_contact_2")
+        self._publish_force(self.opt_force_pub_3, forces_3, "left_contact_3")
+        self._publish_force(self.opt_force_pub_4, forces_4, "right_contact_4")
 
     def _publish_force(self, publisher, forces, frame_id):
         """

@@ -2,3 +2,5 @@ dynamixel_sdk
 numpy
 pyserial
 inputs
+qpsolvers[quadprog]
+scipy

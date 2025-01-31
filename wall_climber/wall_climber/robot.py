@@ -5,6 +5,7 @@ Evaluate current robot state and modify setpoints using forward and inverse kine
 import numpy as np
 import matplotlib.pyplot as plt
 from qpsolvers import solve_qp
+from scipy.linalg import null_space
 
 # Wheel numbering
 FL = 1  # Front left
@@ -15,15 +16,20 @@ RR = 4  # Rear right
 drive_ids = (5, 6, 7, 8)
 steer_ids = (1, 2, 3, 4)
 lift_ids = (9, 10)
-steer_offsets = (0, -20, 45, 0)
+# Change if one of the steering wheels 
+# are turning in the wrong direction
+# id: 1, 2, 3, 4
+steer_offsets = (0, -20, 45, -45) 
 
 elevator_left_offset = -253
 elevator_right_offset = -406
 
-lamb = 1e-6
-# Lower and upper bounds of torque for optimization
-lb = 0
-ub = 10
+# Optimization parameters
+lamb = 1e-3 # for regularization H
+lb = -2     # Lower bound of torque in N/m
+ub = 2      # Upper
+mu = 0.9    # Friction coeff. of wheels
+f_mag = 60  # Magnet adhesion force
 
 class Robot:
     def __init__(
@@ -62,7 +68,10 @@ class Robot:
         self.lamb = lamb
         self.lb = lb
         self.ub = ub
-        # 0 is teleop, 1 is transition
+        self.mu = mu
+        self.f_mag = f_mag
+ 
+    # 0 is teleop, 1 is transition
         self.mode = 0
 
         for i, id in enumerate(lift_ids):
@@ -334,11 +343,9 @@ class Robot:
         plt.legend()
         plt.show()
 
-    #######################################################################################
-    # Some functions for force estimation
     def update_imu(self, acc):
         self.acc = acc
-        # print(f"Acc from update_imu: \n{acc[0]:.3f}, {acc[1]:.3f}, {acc[2]:.3f}")
+        print(f"Acc from update_imu: \n{acc[0]:.3f}, {acc[1]:.3f}, {acc[2]:.3f}")
 
     def get_steer_torques(self):
         """
@@ -444,22 +451,22 @@ class Robot:
         # A = [-Jh';-G]
         A = np.vstack((J.transpose(), G))
 
-        # Contact force
-        # fc = np.linalg.lstsq(A, b, rcond=None)[0]
-
         # Using regularization to penalize sensor noise
         lambda_reg = 0.0001
         A_reg = A.T @ A + np.eye(A.shape[1]) * lambda_reg
         b_reg = A.T @ b
         fc = np.linalg.lstsq(A_reg, b_reg, rcond=None)[0]
-        # print(f"Acc: \n{self.acc[2]}")
-        # print(f"Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n")
-        print(A)
-        print(b)
-        print(fc)
+        #print(f"Acc: \n{self.acc[2]}")
+        #print(f"Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n")
+        #print(A)
+        #print(b)
+
         return fc
     
     def get_optimized_forces(self):
+        """
+        Finding optimized forces using solve_qp
+        """
         # Find u
         u = np.zeros(len(self.drive_ids))
         drive_torques = self.get_drive_torques()
@@ -491,36 +498,72 @@ class Robot:
         f = np.zeros(num_vars)
         f[-1] = -1  # last term is -1 to maximize c
 
+        # Null space
+        Null = null_space(np.vstack((-J.T, G)), rcond=0.01)
+    
         # Equality constraints: Aeq x = beq
-        A_eq = np.hstack((G, np.zeros((G.shape[0], 1))))  # Add zero column for 'c'
-        b_eq = -f_ext  # Static equilibrium constraints
+        A_eq = np.vstack((G, Null.T))
+        A_eq = np.hstack((A_eq, np.zeros((A_eq.shape[0], 1))))  # Add zero column for 'c'
+        
+        b_eq = np.hstack((-f_ext, np.zeros(Null.shape[1])))  # Static equilibrium constraints
 
         # Inequality constraints: A x <= b
-        A_adhesion = np.hstack((J.T, np.ones((J.shape[1], 1))))  # Adhesion constraints
-        b_adhesion = np.zeros(J.shape[1])  # Adjust based on adhesion limits
-
         A_tor_lower = np.hstack((-J.T, np.zeros((J.T.shape[0], 1))))
-        b_tor_lower = self.lb - N  # Torque lower bounds
-
+        b_tor_lower = N - self.lb  # Torque lower bounds
+        
         A_tor_upper = np.hstack((J.T, np.zeros((J.T.shape[0], 1))))
-        b_tor_upper = self.ub - u  # Torque upper bounds
+        b_tor_upper = self.ub - N  # Torque upper bounds
 
+        #Excluding the adhesion margin inequalities
+        A_c = np.array([[-1, 0, -self.mu],
+                        [1, 0, -self.mu],
+                        [0, -1, -self.mu],
+                        [0, 1, -self.mu],
+                        [0, 0, -1]])
+        b_c = np.array([[self.mu * self.f_mag],
+                        [self.mu * self.f_mag],
+                        [self.mu * self.f_mag],
+                        [self.mu * self.f_mag],
+                        [self.f_mag]])
+
+        num_wheels = 4
+        A_row, A_col = A_c.shape
+
+        # big 0 matrix 
+        A_adhesion = np.zeros((num_wheels * A_row, num_wheels * A_col + 1))
+        b_adhesion = np.zeros((num_wheels * A_row, 1))
+
+        for i in range(num_wheels):
+            row_start = i * A_row
+            row_end = (i + 1) * A_row
+            col_start = i * A_col
+            col_end = (i + 1) * A_col
+            # A_c into A_adhesion
+            A_adhesion[row_start:row_end, col_start:col_end] = A_c
+            
+            # last column of 1 into A_adhesion
+            A_adhesion[row_start:row_end, -1] = 1
+            
+            # b_c into b_adhesion
+            b_adhesion[row_start:row_end, 0] = b_c.flatten()
+
+        b_adhesion = b_adhesion.T
+        b_tor_lower = b_tor_lower.reshape(1, -1)  # Reshape to (1, 20)
+        b_tor_upper = b_tor_upper.reshape(1, -1)  # Reshape to (1, 20)
+      
         # Stack A and b with adhesion in priority
         A = np.vstack((A_adhesion, A_tor_lower, A_tor_upper))
         b = np.hstack((b_adhesion, b_tor_lower, b_tor_upper))
 
-        # Formatting for qp solvers
-        lb = np.full(num_vars, -np.inf)
-        ub = np.full(num_vars, np.inf)
-        lb[:num_forces] = self.lb
-        ub[:num_forces] = self.ub
-        lb[-1] = 0
-
-        # qp solver to find maximum
-        x = solve_qp(H, f, A, b, A_eq, b_eq, lb, ub, solver="quadprog")
+        x = solve_qp(H, f, A, b, A_eq, b_eq, solver="quadprog")
 
         f_opt = x[:-1] # optimized forces
+
         c = x[-1] # adhesion margin
+
+        #print(f"f_opt: \n{f_opt}")
+        print(f"c: \n{c}")
+
         return f_opt, c
 
 def skew(vector):
@@ -533,11 +576,12 @@ def skew(vector):
         ]
     )
 
-
 if __name__ == "__main__":
     from motors import Motors
-
-    robot = Robot(Motors(), l=10, w=6, h=1, r=1)  # Testing with fake param.
+    """
+    Testing code with fake param.
+    """
+    robot = Robot(Motors())  
     robot.steer_motors[0].angle = 0
     robot.steer_motors[1].angle = 0
     robot.steer_motors[2].angle = 0
@@ -549,6 +593,13 @@ if __name__ == "__main__":
     print(f"J: \n{J}")
     print(f"G: \n{G}")
 
-    robot.update_imu([0, 0, -9.8])
+    robot.update_imu([-9.8, 0, 0])
+    #robot.update_imu([-9.019, 0.447, -3.8])
     fc = robot.get_contact_forces()
+    fopt,c = robot.get_optimized_forces()
+    
+    fc = np.array(fc).reshape(4, 3)
     print(f"fc: \n{fc}")
+    fopt = fopt.reshape(4, 3)
+    print(f"fopt: \n{fopt}")
+

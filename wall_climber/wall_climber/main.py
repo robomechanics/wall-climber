@@ -17,7 +17,7 @@ def main_loop(terminal, buffer):
     if os.name == "nt":
         port = "COM5"  # Windows
     else:
-        port = "/dev/ttyUSB0"  # Linux
+        port = "/dev/ttyUSB1"  # Linux
 
     robot = Robot(Motors(port=port, baud=57600))
     sub = sally_node()
@@ -55,10 +55,11 @@ def main_loop(terminal, buffer):
         robot.update_state(sub.get_orientation())
         robot.update_imu(sub.get_acceleration())
         contact_forces = robot.get_contact_forces()
-        opt_forces = robot.get_optimized_forces()
+        opt_forces, c = robot.get_optimized_forces()
         
         # For URDF force estimation
         sub.publish_contact_forces(contact_forces)
+        sub.publish_optimized_forces(opt_forces)
         sub.publish_joint_state(robot.motors.get())
         
         loops += 1
