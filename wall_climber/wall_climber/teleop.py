@@ -18,6 +18,14 @@ Parse user input to control the robot
 
 "j" = torque mode
 "k" = velocity mode
+"f" = hold front and drive forward
+"b" = hold front and drive backward
+"2" = hold 2
+"4" = hold 4
+"1" = set straight
+
+"y" = force control on
+"u" = force control off
 """
 
 import sys
@@ -251,6 +259,10 @@ class Terminal:
         elif c == "1":
             robot.set_straight()
             print("Set Straight")
+        elif c == "y":
+            robot.force_control_on = True
+        elif c == "u":
+            robot.force_control_on = False
         elif c == "r":
             if not robot.motors.opened:
                 print(t + "Reconnect")

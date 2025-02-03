@@ -24,12 +24,15 @@ steer_offsets = (0, -20, 45, -45)
 elevator_left_offset = -253
 elevator_right_offset = -406
 
-# Optimization parameters
+# Optimization param.
 lamb = 1e-3 # for regularization H
 lb = -2     # Lower bound of torque in N/m
 ub = 2      # Upper
 mu = 0.9    # Friction coeff. of wheels
 f_mag = 60  # Magnet adhesion force
+
+# Force control param.
+Kp = 30
 
 class Robot:
     def __init__(
@@ -70,9 +73,13 @@ class Robot:
         self.ub = ub
         self.mu = mu
         self.f_mag = f_mag
+
+        # For force control
+        self.Kp = Kp
  
     # 0 is teleop, 1 is transition
         self.mode = 0
+        self.force_control_on = False
 
         for i, id in enumerate(lift_ids):
             self.motors.get(id).goal_torque = 400
@@ -105,7 +112,7 @@ class Robot:
         :param v: Velocity scaled from -1 (reverse) to 1 (forward)
         """
         for i, id in enumerate(drive_ids):
-            # self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+            # self.motors.get(id).goal_velocity = v * self.motors.get(id).speed
             if ((id in (5, 6)) and (v < 0)) or (id in (7, 8) and (v > 0)):
                 self.motors.get(id).set_torque = v * self.motors.get(id).stall * 0 / 4
             else:
@@ -119,7 +126,7 @@ class Robot:
         :param v: Velocity scaled from -1 (reverse) to 1 (forward)
         """
         for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+            self.motors.get(id).goal_velocity = v * self.motors.get(id).speed
             # self.motors.get(id).set_torque = v * self.motors.get(id).stall / 2
         for i, id in enumerate(steer_ids):
             self.motors.get(id).set_angle = 0
@@ -153,9 +160,9 @@ class Robot:
         """
         for i, id in enumerate(drive_ids):
             if id == 4:
-                self.motors.get(id).set_velocity = -1 * v * self.motors.get(id).speed
+                self.motors.get(id).goal_velocity = -1 * v * self.motors.get(id).speed
             else:
-                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+                self.motors.get(id).goal_velocity = v * self.motors.get(id).speed
         for i, id in enumerate(steer_ids):
             if id == 7:
                 self.motors.get(id).set_angle = -90  # * np.sign(v)
@@ -199,7 +206,7 @@ class Robot:
 
     def lift(self, v):
         for i, id in enumerate(lift_ids):
-            self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+            self.motors.get(id).goal_velocity = v * self.motors.get(id).speed
 
     def stop_lift(self):
         for i, id in enumerate(lift_ids):
@@ -215,7 +222,7 @@ class Robot:
             self.motors.get(id).set_angle = angle
 
         # for i, id in enumerate(drive_ids):
-        #    self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+        #    self.motors.get(id).goal_velocity = v * self.motors.get(id).speed
         if self.motors.get(7).torque_mode:
             print("torque mode strafe drive")
             for i, id in enumerate(drive_ids):
@@ -223,7 +230,7 @@ class Robot:
         if self.motors.get(7).velocity_mode:
             print("vel mode strafe drive")
             for i, id in enumerate(drive_ids):
-                self.motors.get(id).set_velocity = v * self.motors.get(id).speed
+                self.motors.get(id).goal_velocity = v * self.motors.get(id).speed
 
     def print_lift(self):
         for i, id in enumerate(lift_ids):
@@ -250,7 +257,7 @@ class Robot:
         """
         drive_dirs = (-1, 1, -1, 1)
         for i, id in enumerate(drive_ids):
-            self.motors.get(id).set_velocity = (
+            self.motors.get(id).goal_velocity = (
                 drive_dirs[i] * v * self.motors.get(id).speed
             )
         steer_dirs = (1, -1, -1, 1)
@@ -270,6 +277,7 @@ class Robot:
         for id in drive_ids:
             self.motors.get(id).set_torque = 0
             self.motors.get(id).set_velocity = 0
+            self.motors.get(id).goal_velocity = 0
         # for id in lift_ids:
         #     self.motors.get(id).set_torque = 0
         # for id in steer_ids:
@@ -287,7 +295,7 @@ class Robot:
         self.motors.get(id).set_torque = t
 
     def set_motor_velocity(self, id, v):
-        self.motors.get(id).set_velocity = v
+        self.motors.get(id).goal_velocity = v
 
     def get_motor_velocity(self, id):
         return self.velocities[id - 1][-1]
@@ -441,9 +449,6 @@ class Robot:
         # Find N, using 0 as placeholder for simplified mass
         N = np.zeros(len(self.drive_ids))
 
-        # b = [u-N; F_ext]
-        b = np.hstack((u - N, -f_ext))
-
         # Find hand Jacobian and grasp map matrices
         J = self.get_hand_Jacobian()
         G = self.get_grasp_map()
@@ -451,11 +456,11 @@ class Robot:
         # A = [-Jh';-G]
         A = np.vstack((J.transpose(), G))
 
-        # Using regularization to penalize sensor noise
-        lambda_reg = 0.0001
-        A_reg = A.T @ A + np.eye(A.shape[1]) * lambda_reg
-        b_reg = A.T @ b
-        fc = np.linalg.lstsq(A_reg, b_reg, rcond=None)[0]
+        # b = [u-N, F_ext]
+        b = np.hstack((u-N, -f_ext))
+        
+        # using rcond to enforce 3-dimensional null space
+        fc = np.linalg.lstsq(A, b, rcond=0.01)[0]
         #print(f"Acc: \n{self.acc[2]}")
         #print(f"Contact Forces: \n{fc[0:3]},\n{fc[3:6]},\n{fc[6:9]},\n{fc[9:12]}\n")
         #print(A)
@@ -562,9 +567,36 @@ class Robot:
         c = x[-1] # adhesion margin
 
         #print(f"f_opt: \n{f_opt}")
-        print(f"c: \n{c}")
+        #print(f"c: \n{c}")
 
         return f_opt, c
+    
+    def force_control(self, f_c, f_opt):
+        """
+        This function takes in the contact forces and optimized forces,
+        then calculates the amount of error and outputs the ideal velocity
+        based on a proportional gain.
+        """
+        for id in drive_ids:
+            self.motors.get(id).set_velocity = self.motors.get(id).goal_velocity
+        
+        if not self.force_control_on:
+            return 
+        
+        diff_forces = f_opt - f_c
+        diff_forces = np.reshape(diff_forces,(12,1))
+        #print("diff f", diff_forces)
+        J = self.get_hand_Jacobian()
+
+        dv = self.Kp * J.T @ diff_forces
+        print("dv:",dv)
+        for i, id in enumerate(drive_ids):
+            self.motors.get(id).set_velocity += dv[i]
+
+
+
+
+
 
 def skew(vector):
     # 6*1 velocity vector to 3*3 skew matrix
@@ -575,6 +607,8 @@ def skew(vector):
             [-vector[1], vector[0], 0],
         ]
     )
+
+
 
 if __name__ == "__main__":
     from motors import Motors

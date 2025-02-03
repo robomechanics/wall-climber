@@ -17,7 +17,7 @@ def main_loop(terminal, buffer):
     if os.name == "nt":
         port = "COM5"  # Windows
     else:
-        port = "/dev/ttyUSB1"  # Linux
+        port = "/dev/ttyUSB0"  # Linux
 
     robot = Robot(Motors(port=port, baud=57600))
     sub = sally_node()
@@ -46,17 +46,18 @@ def main_loop(terminal, buffer):
         robot.motors.read_angle()
         robot.motors.read_torque()
 
-        robot.motors.write_angle()
-        robot.motors.write_velocity()
-        robot.motors.write_torque()
-
         rclpy.spin_once(sub, timeout_sec=0)
 
         robot.update_state(sub.get_orientation())
         robot.update_imu(sub.get_acceleration())
         contact_forces = robot.get_contact_forces()
         opt_forces, c = robot.get_optimized_forces()
-        
+
+        robot.force_control(contact_forces, opt_forces)
+        robot.motors.write_angle()
+        robot.motors.write_velocity()
+        robot.motors.write_torque()
+
         # For URDF force estimation
         sub.publish_contact_forces(contact_forces)
         sub.publish_optimized_forces(opt_forces)
