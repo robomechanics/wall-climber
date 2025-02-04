@@ -1,0 +1,702 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="sally_description">
+  <link
+    name="root">
+  </link>
+  <joint
+    name="root_joint"
+    type="fixed">
+    <parent
+      link="root" />
+    <child
+      link="base_link" />
+  </joint>
+  <link
+    name="left_contact_1">
+  </link>
+  <joint
+    name="contact_joint_1"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 0" />
+    <parent
+      link="left_steer_1" />
+    <child
+      link="left_contact_1" />
+  </joint>
+  <link
+    name="right_contact_2">
+  </link>
+  <joint
+    name="contact_joint_2"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 0" />
+    <parent
+      link="right_steer_2" />
+    <child
+      link="right_contact_2" />
+  </joint>
+  <link
+    name="left_contact_3">
+  </link>
+  <joint
+    name="contact_joint_3"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 0" />
+    <parent
+      link="left_steer_3" />
+    <child
+      link="left_contact_3" />
+  </joint>
+  <link
+    name="right_contact_4">
+  </link>
+  <joint
+    name="contact_joint_4"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 0" />
+    <parent
+      link="right_steer_4" />
+    <child
+      link="right_contact_4" />
+  </joint>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.00453726283569211 1.72906250327983E-08 0.0649766001882711"
+        rpy="0 0 0" />
+      <mass
+        value="1.04896989740454" />
+      <inertia
+        ixx="0.00282225875985932"
+        ixy="8.86552497723036E-10"
+        ixz="2.38090915279792E-06"
+        iyy="0.00187495137104294"
+        iyz="1.14600980366702E-10"
+        izz="0.0030401364202589" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="left_rocker">
+    <inertial>
+      <origin
+        xyz="-5.22693687459341E-06 -0.000511129951603878 -0.00873256816364703"
+        rpy="0 0 0" />
+      <mass
+        value="0.178105377900119" />
+      <inertia
+        ixx="2.36960850812547E-05"
+        ixy="8.57574377729918E-12"
+        ixz="8.46103862437204E-13"
+        iyy="0.00108087330540243"
+        iyz="-1.31852305714886E-11"
+        izz="0.00108433752464315" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_rocker.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_rocker.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_joint"
+    type="continuous">
+    <origin
+      xyz="0 0.15828 0"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="left_rocker" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="left_steer_1">
+    <inertial>
+      <origin
+        xyz="-0.000380743843704789 -0.0375186646478367 -0.0265672449134356"
+        rpy="0 0 0" />
+      <mass
+        value="0.0587517184007175" />
+      <inertia
+        ixx="2.06058885040903E-05"
+        ixy="-5.875276291738E-08"
+        ixz="1.31447006150377E-09"
+        iyy="1.48169617401404E-05"
+        iyz="1.29528972748089E-07"
+        izz="1.38398085758418E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_steer_1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_steer_1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_steer_joint_1"
+    type="continuous">
+    <origin
+      xyz="0.216593999999999 0 -0.0224999999999997"
+      rpy="0 0 0" />
+    <parent
+      link="left_rocker" />
+    <child
+      link="left_steer_1" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="left_drive_1">
+    <inertial>
+      <origin
+        xyz="2.1869602004343E-07 -0.000416103585449246 1.64435007971031E-08"
+        rpy="0 0 0" />
+      <mass
+        value="0.0554840457183498" />
+      <inertia
+        ixx="1.07657718884667E-05"
+        ixy="-3.68121576384119E-12"
+        ixz="1.31017021930968E-09"
+        iyy="1.55957320391394E-05"
+        iyz="-5.67818293112038E-11"
+        izz="1.07826753215428E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_drive_1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_drive_1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_drive_joint_1"
+    type="continuous">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 -0.0101477697111227" />
+    <parent
+      link="left_steer_1" />
+    <child
+      link="left_drive_1" />
+    <axis
+      xyz="0 -1 0" />
+  </joint>
+  <link
+    name="left_steer_3">
+    <inertial>
+      <origin
+        xyz="0.000380743832553848 -0.0375186646479415 -0.0265672449134183"
+        rpy="0 0 0" />
+      <mass
+        value="0.0587517184007075" />
+      <inertia
+        ixx="2.06058885040941E-05"
+        ixy="5.87527627311334E-08"
+        ixz="-1.31448055230847E-09"
+        iyy="1.48169617401366E-05"
+        iyz="1.29528972636925E-07"
+        izz="1.38398085758414E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_steer_3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_steer_3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_steer_joint_3"
+    type="continuous">
+    <origin
+      xyz="-0.216605999999999 0 -0.0224999999999997"
+      rpy="0 0 0" />
+    <parent
+      link="left_rocker" />
+    <child
+      link="left_steer_3" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="left_drive_3">
+    <inertial>
+      <origin
+        xyz="-2.18674786889306E-07 -0.000416104079055818 1.64531514246224E-08"
+        rpy="0 0 0" />
+      <mass
+        value="0.0554840457114122" />
+      <inertia
+        ixx="1.07657718624274E-05"
+        ixy="3.62493602602428E-12"
+        ixz="-1.31016496044379E-09"
+        iyy="1.55957320396784E-05"
+        iyz="-5.65988584122618E-11"
+        izz="1.07826752949292E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_drive_3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/left_drive_3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_drive_joint_3"
+    type="continuous">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 0.0101477697111227" />
+    <parent
+      link="left_steer_3" />
+    <child
+      link="left_drive_3" />
+    <axis
+      xyz="0 -1 0" />
+  </joint>
+  <link
+    name="right_rocker">
+    <inertial>
+      <origin
+        xyz="5.2269363763733E-06 0.000511129951679984 -0.00873256816386873"
+        rpy="0 0 0" />
+      <mass
+        value="0.178105377898082" />
+      <inertia
+        ixx="2.36960850810603E-05"
+        ixy="8.57568168386881E-12"
+        ixz="-8.46204558666885E-13"
+        iyy="0.00108087330540239"
+        iyz="1.31852885197408E-11"
+        izz="0.00108433752464292" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_rocker.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_rocker.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_joint"
+    type="continuous">
+    <origin
+      xyz="0 -0.15828 0"
+      rpy="0 -0.00822664952526456 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="right_rocker" />
+    <axis
+      xyz="0 -1 0" />
+  </joint>
+  <link
+    name="right_steer_2">
+    <inertial>
+      <origin
+        xyz="-0.000380743832546881 0.0375186646479471 -0.0265672449134269"
+        rpy="0 0 0" />
+      <mass
+        value="0.0587517184007206" />
+      <inertia
+        ixx="2.06058885040943E-05"
+        ixy="5.87527627323373E-08"
+        ixz="1.31448055200154E-09"
+        iyy="1.48169617401373E-05"
+        iyz="-1.29528972639071E-07"
+        izz="1.38398085758421E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_steer_2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_steer_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_steer_joint_2"
+    type="continuous">
+    <origin
+      xyz="0.216605999999999 0 -0.0225"
+      rpy="0 0 0" />
+    <parent
+      link="right_rocker" />
+    <child
+      link="right_steer_2" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="right_drive_2">
+    <inertial>
+      <origin
+        xyz="2.18671347695931E-07 0.000416104105907172 1.64491436582814E-08"
+        rpy="0 0 0" />
+      <mass
+        value="0.0554840456798707" />
+      <inertia
+        ixx="1.07657718674878E-05"
+        ixy="3.62508957663341E-12"
+        ixz="1.31016532280365E-09"
+        iyy="1.55957320392295E-05"
+        iyz="5.65998304570102E-11"
+        izz="1.07826753011392E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_drive_2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_drive_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_drive_joint_2"
+    type="continuous">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 0.0101477697111226" />
+    <parent
+      link="right_steer_2" />
+    <child
+      link="right_drive_2" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="right_steer_4">
+    <inertial>
+      <origin
+        xyz="0.000380743843700043 0.0375186646478377 -0.0265672449134261"
+        rpy="0 0 0" />
+      <mass
+        value="0.058751718400719" />
+      <inertia
+        ixx="2.06058885040904E-05"
+        ixy="-5.87527629186926E-08"
+        ixz="-1.31447006150379E-09"
+        iyy="1.48169617401408E-05"
+        iyz="-1.29528972745986E-07"
+        izz="1.38398085758419E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_steer_4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_steer_4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_steer_joint_4"
+    type="continuous">
+    <origin
+      xyz="-0.216593999999999 0 -0.0225"
+      rpy="0 0 0" />
+    <parent
+      link="right_rocker" />
+    <child
+      link="right_steer_4" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="right_drive_4">
+    <inertial>
+      <origin
+        xyz="-3.89231708808335E-07 0.000541318562767595 2.56166474620068E-06"
+        rpy="0 0 0" />
+      <mass
+        value="0.0538732913939733" />
+      <inertia
+        ixx="1.03905112331589E-05"
+        ixy="-7.15126864069451E-12"
+        ixz="-1.2813723569902E-09"
+        iyy="1.55877884986897E-05"
+        iyz="1.10582701735862E-10"
+        izz="1.04069696763585E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_drive_4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/right_drive_4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_drive_joint_4"
+    type="continuous">
+    <origin
+      xyz="0 0 -0.0413"
+      rpy="0 0 -0.0101477697111227" />
+    <parent
+      link="right_steer_4" />
+    <child
+      link="right_drive_4" />
+    <axis
+      xyz="0 1 0" />
+  </joint>
+  <link
+    name="elevator">
+    <inertial>
+      <origin
+        xyz="0.00437120275522039 -6.40229834748985E-05 0.122979342689618"
+        rpy="0 0 0" />
+      <mass
+        value="1.06387788264844" />
+      <inertia
+        ixx="0.00436425661940846"
+        ixy="-7.79432978925522E-07"
+        ixz="-0.000346177883935882"
+        iyy="0.00420758102150805"
+        iyz="4.5616774818824E-06"
+        izz="0.00216544946342206" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/elevator.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://sally_description/meshes/elevator.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="elevator_joint"
+    type="prismatic">
+    <origin
+      xyz="0.00015 0 -0.090755"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="elevator" />
+    <axis
+      xyz="-0.0016528 0 1" />
+    <limit
+      lower="-0.1"
+      upper="0.1"
+      effort="0"
+      velocity="0" />
+  </joint>
+</robot>
