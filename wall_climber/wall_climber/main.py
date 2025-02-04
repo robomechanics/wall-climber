@@ -53,7 +53,7 @@ def main_loop(terminal, buffer):
         contact_forces = robot.get_contact_forces()
         opt_forces, c = robot.get_optimized_forces()
 
-        robot.force_control(contact_forces, opt_forces)
+        robot.force_control(contact_forces, opt_forces, dt)
         robot.motors.write_angle()
         robot.motors.write_velocity()
         robot.motors.write_torque()

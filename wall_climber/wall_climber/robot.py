@@ -32,7 +32,9 @@ mu = 0.9    # Friction coeff. of wheels
 f_mag = 60  # Magnet adhesion force
 
 # Force control param.
-Kp = 30
+#70;10 worked, faster convergence, but oscillation caused motor noise
+Kp = 70
+Kd = 10
 
 class Robot:
     def __init__(
@@ -76,6 +78,8 @@ class Robot:
 
         # For force control
         self.Kp = Kp
+        self.Kd = Kd
+        self.diff_prev = np.zeros((len(drive_ids)*3, 1))
  
     # 0 is teleop, 1 is transition
         self.mode = 0
@@ -571,7 +575,7 @@ class Robot:
 
         return f_opt, c
     
-    def force_control(self, f_c, f_opt):
+    def force_control(self, f_c, f_opt, dt):
         """
         This function takes in the contact forces and optimized forces,
         then calculates the amount of error and outputs the ideal velocity
@@ -581,20 +585,24 @@ class Robot:
             self.motors.get(id).set_velocity = self.motors.get(id).goal_velocity
         
         if not self.force_control_on:
-            return 
+            self.diff_prev = 0
+            return
         
+        # For proportional term
         diff_forces = f_opt - f_c
-        diff_forces = np.reshape(diff_forces,(12,1))
+        diff_forces = np.reshape(diff_forces,(len(drive_ids)*3,1))
         #print("diff f", diff_forces)
-        J = self.get_hand_Jacobian()
+        
+        # For derivative term
+        df_dt = (diff_forces - self.diff_prev) / dt
 
-        dv = self.Kp * J.T @ diff_forces
-        print("dv:",dv)
+        J = self.get_hand_Jacobian() # Use J to convert forces into torques
+        dv = self.Kp * J.T @ diff_forces + self.Kd * J.T @ df_dt
+        print("delta v:",dv)
         for i, id in enumerate(drive_ids):
             self.motors.get(id).set_velocity += dv[i]
 
-
-
+        self.diff_prev = diff_forces
 
 
 
