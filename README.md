@@ -54,29 +54,19 @@ The robot can be controlled using a joystick or via the keyboard.
 
 ![Joystick controls](doc/Joystick.png)
 
-| Key   | Command                             |
-| ----- | ----------------------------------- |
-| Space | Stop                                |
-| w     | Drive forward                       |
-| s     | Drive reverse                       |
-| a     | Strafe left                         |
-| d     | Strafe right                        |
-| q     | Turn counter-clockwise              |
-| e     | Turn clockwise                      |
-| l     | Elevator up (obstacle clearance)    |
-| ;     | Elevator zero (scanning)            |
-| '     | Elevator down (pushing)             |
-| r     | Reconnect to motors                 |
-| p     | Terminate the program               |
-| j     | Enter torque mode                   |
-| k     | Enter velocity mode                 |
-| y     | Turn on force control               |
-| u     | Turn off force control              |
-| 1     | Turn all wheels forwards            |
-| 2     | Turn front wheels sideways          |
-| 4     | Turn all wheels sideways            |
-| f     | Turn front wheels and drive forward |
-| b     | Turn front wheels and drive reverse |
+| Key   | Command                | Key | Command                             |
+| ----- | ---------------------- | --- | ----------------------------------- |
+| Space | Stop                   | p   | Terminate the program               |
+| w     | Drive forward          | j   | Enter torque mode                   |
+| s     | Drive reverse          | k   | Enter velocity mode                 |
+| a     | Strafe left            | y   | Turn on force control               |
+| d     | Strafe right           | u   | Turn off force control              |
+| q     | Turn counter-clockwise | 1   | Turn all wheels forwards            |
+| e     | Turn clockwise         | 2   | Turn front wheels sideways          |
+| l     | Raise elevator         | 4   | Turn all wheels sideways            |
+| ;     | Zero elevator          | f   | Turn front wheels and drive forward |
+| '     | Push with elevator     | b   | Turn front wheels and drive reverse |
+| r     | Reconnect to motors    |     |                                     |
 
 ## Troubleshooting
 
