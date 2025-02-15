@@ -34,7 +34,6 @@ import numpy as np
 
 
 class Terminal:
-
     def __init__(self, terminal, buffer, sub):
         """
         Initialize terminal as user interface
@@ -79,7 +78,7 @@ class Terminal:
 
         cont = self.sub.get_data()
         # print(cont)
-        self.joystick = cont != None
+        self.joystick = cont is not None
         if self.joystick:
             self.LeftJoystickX = cont[0][0]
             self.LeftJoystickY = cont[0][1]
@@ -129,14 +128,14 @@ class Terminal:
         self.terminal.erase()
         y, x = self.terminal.getmaxyx()
         lines = buffer[-10000:].split("\n")[-y + n : -1]
-        for i in range(y - 1 - n - len(lines)):
+        for _ in range(y - 1 - n - len(lines)):
             self.terminal.addstr("\n")
         for line in lines:
             self.terminal.addstr(line[: x - 1] + "\n")
-        for i in range(len(self.status)):
-            if self.status[i]:
+        for _, status_item in enumerate(self.status):
+            if status_item:
                 self.terminal.addstr(
-                    (self.status[i].replace("\n", " \\ ") + "\n")[: x - 1]
+                    (status_item.replace("\n", " \\ ") + "\n")[:x - 1]
                 )
         self.terminal.addstr(("> " + self.command_text)[: x - 1])
         if self.i < len(buffer):
@@ -170,7 +169,6 @@ class Terminal:
                     robot.motors.motors_by_id[id].set_torque = val
         except (ValueError, IndexError):
             print(t + f"Invalid command: {command}")
-            pass
 
         # print(self.LeftTrigger, self.RightTrigger)
         if c == "+":
@@ -268,46 +266,32 @@ class Terminal:
                 print(t + "Reconnect")
                 robot.motors.connect()
             print(t + "Enable")
-            robot.motors.enable()
-        elif c == "j":
-            for i, id in enumerate(robot.drive_ids):
-                if robot.motors.get(id).torque_mode:
-                    robot.motors.enable(
-                        robot.drive_ids, velocity_mode=True, torque_mode=False
-                    )
-                    for i, id in enumerate(robot.drive_ids):
-                        robot.motors.get(id).goal_torque = 200
-                        robot.motors.get(id).set_torque = 200
-                        print(id, "GOING INTO VELOCITY MODE")
-        elif c == "k":
-            for i, id in enumerate(robot.drive_ids):
-                if robot.motors.get(id).velocity_mode:
-                    robot.motors.enable(
-                        robot.drive_ids, velocity_mode=False, torque_mode=True
-                    )
-                    for i, id in enumerate(robot.drive_ids):
-                        robot.motors.get(id).goal_torque = 0
-                        robot.motors.get(id).set_torque = 0
-                        print(id, "GOING INTO TORQUE MODE")
+            robot.motors.enable(robot.drive_ids, velocity_mode=False, torque_mode=True)
+        elif c == "j": # Vel
+            robot.set_velocity_mode()
+            print("ENTERING VELOCITY MODE")
+        elif c == "k": # Tor
+            robot.set_torque_mode()
+            print("ENTERING TORQUE MODE")
         elif self.B and not self.heldB:
             self.heldB = True
-            for i, id in enumerate(robot.drive_ids):
+            for id in enumerate(robot.drive_ids):
                 if robot.motors.get(id).velocity_mode:
                     robot.motors.enable(
                         robot.drive_ids, velocity_mode=False, torque_mode=True
                     )
-                    for i, id in enumerate(robot.drive_ids):
+                    for id in enumerate(robot.drive_ids):
                         robot.motors.get(id).goal_torque = 0
                         robot.motors.get(id).set_torque = 0
                         print(id, "GOING INTO TORQUE MODE")
         elif (not self.B) and self.heldB:
             self.heldB = False
-            for i, id in enumerate(robot.drive_ids):
+            for _, id in enumerate(robot.drive_ids):
                 if robot.motors.get(id).torque_mode:
                     robot.motors.enable(
                         robot.drive_ids, velocity_mode=True, torque_mode=False
                     )
-                    for i, id in enumerate(robot.drive_ids):
+                    for _, id in enumerate(robot.drive_ids):
                         robot.motors.get(id).goal_torque = 200
                         robot.motors.get(id).set_torque = 200
                         print(id, "GOING INTO VELOCITY MODE")
@@ -341,5 +325,4 @@ class Terminal:
             robot.zero_elevator()
         else:
             robot.lift(0)
-
         # robot.print_lift()

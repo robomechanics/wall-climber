@@ -1,27 +1,33 @@
-#!/usr/bin/env python3
+"""
+Main executable file.
+"""
 
-from wall_climber.motors import Motors
-from wall_climber.robot import Robot
-from wall_climber.teleop import Terminal
-from wall_climber.listener import sally_node
-import wall_climber.transition as transition
-from serial import SerialException
-import rclpy
-import io
 import time
 import curses
 import os
-
+import io
+import rclpy
+from serial import SerialException
+from wall_climber.motors import Motors
+from wall_climber.robot import Robot
+from wall_climber.teleop import Terminal
+from wall_climber.sally_node import SallyNode
+from wall_climber.transition import loop
 
 def main_loop(terminal, buffer):
+    """
+    The main loop checks for operator input, reads the motor data, 
+    computes force feedback, writes values to the motors, 
+    and updates the display.
+    """
     if os.name == "nt":
         port = "COM5"  # Windows
     else:
         port = "/dev/ttyUSB0"  # Linux
-
-    robot = Robot(Motors(port=port, baud=57600))
-    sub = sally_node()
-    interface = Terminal(terminal, buffer, sub)
+    
+    node = SallyNode()
+    robot = Robot(Motors(port=port, baud=57600), node)
+    interface = Terminal(terminal, buffer, node)
 
     t = time.perf_counter()  # current time in seconds
     t0 = t  # start time for loop counter in seconds
@@ -37,21 +43,21 @@ def main_loop(terminal, buffer):
         if robot.mode == 0:
             interface.teleop(robot, dt)
         elif robot.mode == 1:
-            transition.loop(robot)
+            loop(robot)
 
-        if type(interface) == Terminal:
+        if isinstance(interface, Terminal):
             interface.display()
 
-        robot.motors.read_velocity()
+        # robot.motors.read_velocity()
         robot.motors.read_angle()
         robot.motors.read_torque()
 
-        rclpy.spin_once(sub, timeout_sec=0)
+        rclpy.spin_once(node, timeout_sec=0)
 
-        robot.update_state(sub.get_orientation())
-        robot.update_imu(sub.get_acceleration())
+        robot.update_state(node.get_orientation())
+        robot.update_imu(node.get_acceleration())
         contact_forces = robot.get_contact_forces()
-        opt_forces, c = robot.get_optimized_forces()
+        opt_forces, _ = robot.get_optimized_forces()
 
         robot.force_control(contact_forces, opt_forces, dt)
         robot.motors.write_angle()
@@ -59,12 +65,12 @@ def main_loop(terminal, buffer):
         robot.motors.write_torque()
 
         # For URDF force estimation
-        sub.publish_contact_forces(contact_forces)
-        sub.publish_optimized_forces(opt_forces)
-        sub.publish_joint_state(robot.motors.get())
-        
+        node.publish_contact_forces(contact_forces)
+        node.publish_optimized_forces(opt_forces)
+        node.publish_joint_state(robot.motors.get())
+
         loops += 1
-        if t - t0 > 0.25:
+        if t - t0 > 0.5:
             robot.motors.read_voltage()
             robot.motors.read_temp()
             temp = max(m.temperature for m in robot.motors.get())
@@ -89,6 +95,10 @@ def main_loop(terminal, buffer):
 
 
 def main():
+    """
+    The main function starts the main loop
+    """
+
     rclpy.init()
 
     buf = io.StringIO()

@@ -1,3 +1,13 @@
+"""
+This launch file will run the robot node, joystick node, IMU node,
+rviz node, and the robot state publisher.
+
+Launch arguments:
+urdf_path -- Robot description file
+xacro_args -- Xacro arguments (e.g. 'param:=value')
+rviz_path -- Rviz configuration
+"""
+
 import os
 
 from launch import LaunchDescription
@@ -6,11 +16,6 @@ from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import (
-    LaunchConfiguration,
-    Command,
-    PathJoinSubstitution,
-)
 from ament_index_python import get_package_share_directory
 
 urdf_pkg = FindPackageShare("sally_description")
@@ -21,7 +26,6 @@ robot_description = ParameterValue(
     Command(["xacro ", urdf_path, " ", LaunchConfiguration("xacro_args")]),
     value_type=str,
 )
-
 
 def generate_launch_description():
     return LaunchDescription(
@@ -88,7 +92,7 @@ def generate_launch_description():
                 executable="rviz2",
                 name="rviz2",
                 output="screen",
-                arguments=["-d", rviz_path]
+                arguments=["-d", rviz_path],
             ),
             Node(
                 package="robot_state_publisher",

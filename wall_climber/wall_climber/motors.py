@@ -2,7 +2,19 @@
 Interface class for simultaneously controlling multiple Dynamixel motors
 """
 
-from dynamixel_sdk import *
+import time
+from dynamixel_sdk import (
+    PortHandler,
+    PacketHandler,
+    GroupSyncRead,
+    GroupSyncWrite,
+    DXL_LOBYTE,
+    DXL_HIBYTE,
+    DXL_LOWORD,
+    DXL_HIWORD,
+    DXL_MAKEWORD,
+    DXL_MAKEDWORD
+)
 
 # Supported motor series (with protocol version)
 SERIES = {"AX": 1, "XM": 2}
@@ -42,6 +54,9 @@ TORQUE_ENABLE_XM = 64, 1
 
 
 class Motors:
+    """
+    Motors represents all of the motors on the robot.
+    """
 
     def __init__(self, port="/dev/ttyUSB0", baud=1000000):
         """
@@ -52,9 +67,9 @@ class Motors:
         """
         self.motors_by_id = {}
         self.motors_by_series = {series: [] for series in SERIES}
-        self.portHandler = PortHandler(port)
-        self.packetHandler1 = PacketHandler(1.0)
-        self.packetHandler2 = PacketHandler(2.0)
+        self.port_handler = PortHandler(port)
+        self.packet_handler1 = PacketHandler(1.0)
+        self.packet_handler2 = PacketHandler(2.0)
         self.opened = False
         self.status = "Disconnected"
         self.baud = baud
@@ -66,8 +81,8 @@ class Motors:
         """
         self.opened = False
         try:
-            self.portHandler.openPort()
-            self.portHandler.setBaudRate(self.baud)
+            self.port_handler.openPort()
+            self.port_handler.setBaudRate(self.baud)
             self.opened = True
             self.status = "Connected"
         except Exception as e:
@@ -91,7 +106,8 @@ class Motors:
         :param lower: Lower angle limit in deg
         :param upper: Upper angle limit in deg
         :param mirror: List of mirrored motor id numbers (or bool for single motor)
-        :param offset: Dictionary mapping motor id to offset angle in deg (or float for single motor)
+        :param offset: Dictionary mapping motor id to offset angle in deg 
+                       (or float for single motor)
         """
         if not hasattr(ids, "__iter__"):
             if offset:
@@ -152,11 +168,11 @@ class Motors:
                 if id in self.motors_by_id:
                     motor_list.append(self.motors_by_id[id])
             return motor_list
-        else:
-            if not ids:
-                return list(self.motors_by_id.values())
-            if ids in self.motors_by_id:
-                return self.motors_by_id[ids]
+        if not ids:
+            return list(self.motors_by_id.values())
+        if ids in self.motors_by_id:
+            return self.motors_by_id[ids]
+        return None
 
     def write(self, ids, address, length, value):
         """
@@ -173,12 +189,12 @@ class Motors:
         ids = (ids,) if not hasattr(ids, "__iter__") else ids
         for id in ids:
             if self.motors_by_id[id].protocol == 1:
-                self.packetHandler1.writeTxRx(
-                    self.portHandler, id, address, length, float2bytes(value, length)
+                self.packet_handler1.writeTxRx(
+                    self.port_handler, id, address, length, float2bytes(value, length)
                 )
             else:
-                self.packetHandler2.writeTxRx(
-                    self.portHandler, id, address, length, float2bytes(value, length)
+                self.packet_handler2.writeTxRx(
+                    self.port_handler, id, address, length, float2bytes(value, length)
                 )
             time.sleep(0.001)
 
@@ -253,17 +269,17 @@ class Motors:
             )
             if series == "AX":
                 for motor in motor_list:
-                    raw, _, _ = self.packetHandler1.readTxRx(
-                        self.portHandler, motor.id, *PRESENT_POSITION_AX
+                    raw, _, _ = self.packet_handler1.readTxRx(
+                        self.port_handler, motor.id, *PRESENT_POSITION_AX
                     )
-                    if len(raw):
+                    if len(raw) > 0:
                         self.status = "Connected"
                     motor.angle = (
                         bytes2float(raw) / 1023.0 * 300 - 150
                     ) * motor.mirror - motor.offset
             elif series == "XM":
                 sync = GroupSyncRead(
-                    self.portHandler, self.packetHandler2, *PRESENT_POSITION_XM
+                    self.port_handler, self.packet_handler2, *PRESENT_POSITION_XM
                 )
                 for motor in motor_list:
                     sync.addParam(motor.id)
@@ -272,6 +288,8 @@ class Motors:
                     raw = sync.getData(motor.id, *PRESENT_POSITION_XM)
                     if raw:
                         self.status = "Connected"
+                    if raw >= 2147483648:
+                        raw -= 2147483648 * 2
                     motor.angle = (
                         raw / 4095.0 * 360 - 180
                     ) * motor.mirror - motor.offset
@@ -301,7 +319,7 @@ class Motors:
                     motor.goal_angle = motor.upper
             if series == "AX":
                 sync = GroupSyncWrite(
-                    self.portHandler, self.packetHandler1, *GOAL_POSITION_AX
+                    self.port_handler, self.packet_handler1, *GOAL_POSITION_AX
                 )
                 for motor in motor_list:
                     raw = (
@@ -314,7 +332,7 @@ class Motors:
                     sync.txPacket()
             elif series == "XM":
                 sync = GroupSyncWrite(
-                    self.portHandler, self.packetHandler2, *GOAL_POSITION_XM
+                    self.port_handler, self.packet_handler2, *GOAL_POSITION_XM
                 )
                 for motor in motor_list:
                     raw = (
@@ -342,8 +360,8 @@ class Motors:
             )
             if series == "AX":
                 for motor in motor_list:
-                    raw, _, _ = self.packetHandler1.readTxRx(
-                        self.portHandler, motor.id, *PRESENT_SPEED_AX
+                    raw, _, _ = self.packet_handler1.readTxRx(
+                        self.port_handler, motor.id, *PRESENT_SPEED_AX
                     )
                     raw = bytes2float(raw)
                     if raw >= 1024:
@@ -351,7 +369,7 @@ class Motors:
                     motor.velocity = raw * 0.111 * 6 * motor.mirror
             elif series == "XM":
                 sync = GroupSyncRead(
-                    self.portHandler, self.packetHandler2, *PRESENT_VELOCITY_XM
+                    self.port_handler, self.packet_handler2, *PRESENT_VELOCITY_XM
                 )
                 for motor in motor_list:
                     sync.addParam(motor.id)
@@ -376,7 +394,7 @@ class Motors:
             )
             if series == "AX":
                 sync = GroupSyncWrite(
-                    self.portHandler, self.packetHandler1, *MOVING_SPEED_AX
+                    self.port_handler, self.packet_handler1, *MOVING_SPEED_AX
                 )
                 for motor in motor_list:
                     raw = motor.set_velocity / 0.111 / 6
@@ -389,10 +407,10 @@ class Motors:
                     sync.txPacket()
             elif series == "XM":
                 sync_vel = GroupSyncWrite(
-                    self.portHandler, self.packetHandler2, *GOAL_VELOCITY_XM
+                    self.port_handler, self.packet_handler2, *GOAL_VELOCITY_XM
                 )
                 sync = GroupSyncWrite(
-                    self.portHandler, self.packetHandler2, *PROFILE_VELOCITY_XM
+                    self.port_handler, self.packet_handler2, *PROFILE_VELOCITY_XM
                 )
                 for motor in motor_list:
                     if motor.velocity_mode:
@@ -422,8 +440,8 @@ class Motors:
             )
             if series == "AX":
                 for motor in motor_list:
-                    raw, _, _ = self.packetHandler1.readTxRx(
-                        self.portHandler, motor.id, *PRESENT_LOAD_AX
+                    raw, _, _ = self.packet_handler1.readTxRx(
+                        self.port_handler, motor.id, *PRESENT_LOAD_AX
                     )
                     raw = bytes2float(raw)
                     if raw >= 1024:
@@ -433,7 +451,7 @@ class Motors:
                     motor.torque = sum(motor.torque_list) / len(motor.torque_list)
             elif series == "XM":
                 sync = GroupSyncRead(
-                    self.portHandler, self.packetHandler2, *PRESENT_CURRENT_XM
+                    self.port_handler, self.packet_handler2, *PRESENT_CURRENT_XM
                 )
                 for motor in motor_list:
                     sync.addParam(motor.id)
@@ -460,7 +478,7 @@ class Motors:
             )
             if series == "AX":
                 sync = GroupSyncWrite(
-                    self.portHandler, self.packetHandler1, *TORQUE_LIMIT_AX
+                    self.port_handler, self.packet_handler1, *TORQUE_LIMIT_AX
                 )
                 for motor in motor_list:
                     raw = min(abs(motor.set_torque), motor.stall) / motor.stall * 1023
@@ -469,7 +487,7 @@ class Motors:
                     sync.txPacket()
             elif series == "XM":
                 sync = GroupSyncWrite(
-                    self.portHandler, self.packetHandler2, *GOAL_CURRENT_XM
+                    self.port_handler, self.packet_handler2, *GOAL_CURRENT_XM
                 )
                 for motor in motor_list:
 
@@ -508,13 +526,13 @@ class Motors:
             )
             if series == "AX":
                 for motor in motor_list:
-                    raw, _, _ = self.packetHandler1.readTxRx(
-                        self.portHandler, motor.id, *PRESENT_VOLTAGE_AX
+                    raw, _, _ = self.packet_handler1.readTxRx(
+                        self.port_handler, motor.id, *PRESENT_VOLTAGE_AX
                     )
                     motor.voltage = bytes2float(raw) / 10.0
             elif series == "XM":
                 sync = GroupSyncRead(
-                    self.portHandler, self.packetHandler2, *PRESENT_INPUT_VOLTAGE_XM
+                    self.port_handler, self.packet_handler2, *PRESENT_INPUT_VOLTAGE_XM
                 )
                 for motor in motor_list:
                     sync.addParam(motor.id)
@@ -539,13 +557,13 @@ class Motors:
             )
             if series == "AX":
                 for motor in motor_list:
-                    raw, _, _ = self.packetHandler1.readTxRx(
-                        self.portHandler, motor.id, *PRESENT_TEMPERATURE_AX
+                    raw, _, _ = self.packet_handler1.readTxRx(
+                        self.port_handler, motor.id, *PRESENT_TEMPERATURE_AX
                     )
                     motor.temperature = bytes2float(raw)
             elif series == "XM":
                 sync = GroupSyncRead(
-                    self.portHandler, self.packetHandler2, *PRESENT_TEMPERATURE_XM
+                    self.port_handler, self.packet_handler2, *PRESENT_TEMPERATURE_XM
                 )
                 for motor in motor_list:
                     sync.addParam(motor.id)
@@ -559,6 +577,10 @@ class Motors:
 
 
 class Motor:
+    """
+    Motor represents an individual Dynamixel motor
+    """
+
     def __init__(
         self,
         id,

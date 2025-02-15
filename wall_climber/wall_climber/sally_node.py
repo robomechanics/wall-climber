@@ -1,16 +1,20 @@
+"""
+Publishers and listeners for running ROS
+"""
+
 import math
 from rclpy.node import Node
-
-# from std_msgs.msg import String
 from sensor_msgs.msg import Joy, Imu, JointState
 from geometry_msgs.msg import WrenchStamped
 from scipy.spatial.transform import Rotation
-from std_msgs.msg import Float32MultiArray
 
-
-class sally_node(Node):
+class SallyNode(Node):
+    """
+    ROS node's publishers, including joystick, IMU, joint states,
+    as well as forces needed for force controls (contact & optimized forces)
+    """
     def __init__(self):
-        super().__init__("sally_node")
+        super().__init__("SallyNode")
         self.controls = None
         self.orientation = [0, 0, 0]
         self.acceleration = [0, 0, 0]
@@ -26,21 +30,40 @@ class sally_node(Node):
         self.force_pub_2 = self.create_publisher(WrenchStamped, "contact_force_2", 10)
         self.force_pub_3 = self.create_publisher(WrenchStamped, "contact_force_3", 10)
         self.force_pub_4 = self.create_publisher(WrenchStamped, "contact_force_4", 10)
-        self.opt_force_pub_1 = self.create_publisher(WrenchStamped, "optimized_force_1", 10)
-        self.opt_force_pub_2 = self.create_publisher(WrenchStamped, "optimized_force_2", 10)
-        self.opt_force_pub_3 = self.create_publisher(WrenchStamped, "optimized_force_3", 10)
-        self.opt_force_pub_4 = self.create_publisher(WrenchStamped, "optimized_force_4", 10)
+        self.opt_force_pub_1 = self.create_publisher(
+            WrenchStamped, "optimized_force_1", 10
+        )
+        self.opt_force_pub_2 = self.create_publisher(
+            WrenchStamped, "optimized_force_2", 10
+        )
+        self.opt_force_pub_3 = self.create_publisher(
+            WrenchStamped, "optimized_force_3", 10
+        )
+        self.opt_force_pub_4 = self.create_publisher(
+            WrenchStamped, "optimized_force_4", 10
+        )
         self.pub_joint_state = self.create_publisher(JointState, "joint_states", 10)
 
     def update_controls(self, data):
+        """
+        Log robot control inputs
+
+        :param data: input data from controls of operator
+        """
         self.controls = (data.axes, data.buttons)
-        # print(self.controls)
 
     def get_data(self):
+        """
+        Fetch control data
+        """
         return self.controls
 
     def update_imu(self, data):
-        # q = np.ndarray(data.orientation.w, data.orientation.x, data.orientation.y, data.orientation.z)
+        """
+        Log IMU orientation anc acceleration data
+
+        :param data: data from IMU node
+        """
         q = Rotation.from_quat(
             [
                 data.orientation.x,
@@ -51,11 +74,6 @@ class sally_node(Node):
         )
         e = q.as_euler("xyz", True)
         self.orientation = [float(e[0]) % 360, float(e[1]) % 360, float(e[2]) % 360]
-
-        """
-        Adding this line to obtain acceleration
-        """
-
         self.acceleration = [
             -data.linear_acceleration.x,
             -data.linear_acceleration.y,
@@ -63,14 +81,23 @@ class sally_node(Node):
         ]
 
     def get_orientation(self):
+        """
+        Fetch orientation data from IMU
+        """
         return self.orientation
 
     def get_acceleration(self):
+        """
+        Fetch acceleration data from IMU
+        """
         return self.acceleration
 
-    # For publisher
     def publish_contact_forces(self, contact_forces):
-        # Split the 1x12 forces of each wheel into four 1x3 segments
+        """
+        Publish contact forces for wheels
+
+        :param contact_forces: estimated contact forces from robot.py
+        """
         forces_1 = contact_forces[0:3]
         forces_2 = contact_forces[3:6]
         forces_3 = contact_forces[6:9]
@@ -82,6 +109,11 @@ class sally_node(Node):
         self._publish_force(self.force_pub_4, forces_4, "right_contact_4")
 
     def publish_optimized_forces(self, optimized_forces):
+        """
+        Publish optimized forces for wheels
+
+        :param optimized_forces: optimized goal forces from robot.py
+        """
         forces_1 = optimized_forces[0:3]
         forces_2 = optimized_forces[3:6]
         forces_3 = optimized_forces[6:9]
@@ -99,25 +131,29 @@ class sally_node(Node):
         Splits a 1x12 contact forces array into four 1x3 segments and publishes them
         as WrenchStamped messages on their respective topics.
 
-        Args:
-            contact_forces (list or array): A list or array of 12 float values representing contact forces.
+        :param publisher: publisher sending WrenchStamped messages
+        :param forces: motor torques read from each motor
+        :param frame_id: associate contact force with motor ids
         """
 
         msg = WrenchStamped()
-        msg.header.frame_id = frame_id  # Frame ID for the corresponding contact point
+        msg.header.frame_id = frame_id
         msg.header.stamp = self.get_clock().now().to_msg()
-        # Populate forces and torques
         msg.wrench.force.x = forces[0]
         msg.wrench.force.y = forces[1]
         msg.wrench.force.z = forces[2]
         msg.wrench.torque.x = 0.0  # Assuming no torques for now
         msg.wrench.torque.y = 0.0
         msg.wrench.torque.z = 0.0
-        # Publish
+
         publisher.publish(msg)
-        # self.get_logger().info(f"Published {frame_id} contact force: {msg.wrench.force}")
 
     def publish_joint_state(self, motors):
+        """
+        publishing joint states with from motor readings
+
+        :param motors: motor information
+        """
         msg = JointState()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.name = [
